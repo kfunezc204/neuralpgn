@@ -50,12 +50,12 @@ export function ProfileSelector({
   return (
     <main className="view-enter mx-auto max-w-md p-8">
       <header className="flex items-center gap-3">
-        <span
+        <img
+          src="/logo.png"
+          alt=""
           aria-hidden="true"
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-gradient-to-br from-surface-2 to-surface-3 text-3xl text-accent"
-        >
-          ♞
-        </span>
+          className="h-12 w-12 rounded-xl"
+        />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">NeuralPGN</h1>
           <p className="text-sm text-ink-muted">¿Quién entrena hoy?</p>
