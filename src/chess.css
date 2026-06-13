@@ -1,0 +1,104 @@
+@import "chessground/assets/chessground.base.css";
+@import "chessground/assets/chessground.cburnett.css";
+
+/*
+ * Tablero madera propio (sustituye chessground.brown.css, que también
+ * definía los colores interactivos — por eso se reponen aquí).
+ * Paleta alineada con el acento dorado del tema: claras #e8d3aa,
+ * oscuras #a87f4f; last-move/selected en dorado de marca.
+ */
+
+.cg-wrap {
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 7%),
+    0 12px 32px rgb(0 0 0 / 45%);
+}
+
+cg-board {
+  border-radius: 6px;
+  background-color: #e8d3aa;
+  /* Damero 2x2 por tile: TL clara, TR oscura, BL oscura, BR clara. */
+  background-image: conic-gradient(
+    #a87f4f 0 25%,
+    #e8d3aa 0 50%,
+    #a87f4f 0 75%,
+    #e8d3aa 0
+  );
+  background-size: 25% 25%;
+}
+
+/** Interactive board square colors */
+cg-board square.move-dest {
+  background: radial-gradient(
+    rgba(20, 85, 30, 0.5) 22%,
+    #208530 0,
+    rgba(0, 0, 0, 0.3) 0,
+    rgba(0, 0, 0, 0) 0
+  );
+}
+cg-board square.premove-dest {
+  background: radial-gradient(
+    rgba(20, 30, 85, 0.5) 22%,
+    #203085 0,
+    rgba(0, 0, 0, 0.3) 0,
+    rgba(0, 0, 0, 0) 0
+  );
+}
+cg-board square.oc.move-dest {
+  background: radial-gradient(
+    transparent 0%,
+    transparent 80%,
+    rgba(20, 85, 0, 0.3) 80%
+  );
+}
+cg-board square.oc.premove-dest {
+  background: radial-gradient(
+    transparent 0%,
+    transparent 80%,
+    rgba(20, 30, 85, 0.2) 80%
+  );
+}
+cg-board square.move-dest:hover {
+  background: rgba(20, 85, 30, 0.3);
+}
+cg-board square.premove-dest:hover {
+  background: rgba(20, 30, 85, 0.2);
+}
+cg-board square.last-move {
+  background-color: rgba(217, 164, 64, 0.45);
+}
+cg-board square.selected {
+  background-color: rgba(217, 164, 64, 0.55);
+}
+cg-board square.check {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 0, 0, 1) 0%,
+    rgba(231, 0, 0, 1) 25%,
+    rgba(169, 0, 0, 0) 89%,
+    rgba(158, 0, 0, 0) 100%
+  );
+}
+cg-board square.current-premove {
+  background-color: rgba(20, 30, 85, 0.5);
+}
+
+/** Alternating colors in rank/file/square labels */
+.orientation-white .ranks :nth-child(odd),
+.orientation-white .files :nth-child(even),
+.orientation-black .ranks :nth-child(even),
+.orientation-black .files :nth-child(odd),
+coords.squares:nth-of-type(odd) :nth-child(even),
+coords.squares:nth-of-type(even) :nth-child(odd) {
+  color: rgba(107, 84, 54, 0.9);
+}
+
+.orientation-white .ranks :nth-child(even),
+.orientation-white .files :nth-child(odd),
+.orientation-black .ranks :nth-child(odd),
+.orientation-black .files :nth-child(even),
+coords.squares:nth-of-type(odd) :nth-child(odd),
+coords.squares:nth-of-type(even) :nth-child(even) {
+  color: rgba(244, 231, 201, 0.9);
+}

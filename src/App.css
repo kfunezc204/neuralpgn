@@ -1,0 +1,91 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/*
+ * Design tokens — single source of truth for the dark "refined" theme.
+ * Surfaces layer from the page base (surface-0) upward; raised layers get
+ * lighter, never shadows alone (borders read better than shadows on dark).
+ * One brand accent (gold); ok/danger are desaturated so they don't compete.
+ */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "Cascadia Mono",
+    monospace;
+
+  /* Surfaces */
+  --color-surface-0: #0c0d10;
+  --color-surface-1: #14161b;
+  --color-surface-2: #1b1e25;
+  --color-surface-3: #232732;
+
+  /* Hairline borders */
+  --color-line: rgb(255 255 255 / 7%);
+  --color-line-strong: rgb(255 255 255 / 14%);
+
+  /* Text */
+  --color-ink: #e8eaef;
+  --color-ink-muted: #9aa1ad;
+  --color-ink-faint: #5d6470;
+
+  /* Brand accent — gold. accent-contrast is the text color on solid gold. */
+  --color-accent: #d9a440;
+  --color-accent-hover: #e6b659;
+  --color-accent-soft: rgb(217 164 64 / 12%);
+  --color-accent-contrast: #1c1505;
+
+  /* Semantic states (desaturated for dark) */
+  --color-ok: #57c97f;
+  --color-ok-soft: rgb(87 201 127 / 12%);
+  --color-danger: #e06b6b;
+  --color-danger-soft: rgb(224 107 107 / 12%);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface-0);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+
+/* Route/view entrance — applied to top-level <main> containers. */
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-enter {
+  animation: view-enter 200ms ease-out both;
+}

@@ -1,0 +1,52 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# Tauri / Rust build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# SQLite database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Local env / secrets
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+*.stackdump
+
+# Local test scratch
+smoke.ts
+
+# Imported PGNs and scratch data (not source)
+*.pgn
+*.pgi
+*.ini
+example.txt
+
+# Screenshots / scratch images
+*image.png
+image.png*
+image copy*.png
+
+# Internal docs / planning (not part of the public release)
+/plans/
+/PRD.md
+/newAppPRD.md
+/Plan de publicacion.md
+
+# Local verification scratch (driver + screenshots)
+/.verify/
