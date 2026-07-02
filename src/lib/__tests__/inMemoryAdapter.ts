@@ -1,5 +1,9 @@
 import { DatabaseSync } from 'node:sqlite'
-import type { SqlAdapter, SqlExecuteResult } from '../SqlAdapter.ts'
+import type {
+  SqlAdapter,
+  SqlExecuteResult,
+  SqlStatement,
+} from '../SqlAdapter.ts'
 
 class NodeSqliteInMemoryAdapter implements SqlAdapter {
   private readonly db: DatabaseSync
@@ -24,6 +28,22 @@ class NodeSqliteInMemoryAdapter implements SqlAdapter {
   async select<T>(sql: string, params: unknown[] = []): Promise<T[]> {
     const stmt = this.db.prepare(sql)
     return stmt.all(...(params as never[])) as T[]
+  }
+
+  async executeAtomic(statements: SqlStatement[]): Promise<void> {
+    // Single connection, so BEGIN/COMMIT is a real transaction here — the
+    // same all-or-nothing contract the Tauri adapter gets from the
+    // sql_execute_atomic Rust command.
+    this.db.exec('BEGIN')
+    try {
+      for (const st of statements) {
+        this.db.prepare(st.sql).run(...(st.params as never[]))
+      }
+      this.db.exec('COMMIT')
+    } catch (err) {
+      this.db.exec('ROLLBACK')
+      throw err
+    }
   }
 
   async close(): Promise<void> {

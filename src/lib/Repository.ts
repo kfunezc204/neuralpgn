@@ -1,6 +1,6 @@
 import { masteryPredicateSql } from './MasteryEvaluator.ts'
 import type { MoveMissKind } from './WeakPointDeck.ts'
-import type { SqlAdapter } from './SqlAdapter.ts'
+import type { SqlAdapter, SqlStatement } from './SqlAdapter.ts'
 import type {
   BoardShape,
   IngestResult,
@@ -97,6 +97,26 @@ export interface PersistedLineState {
 export interface LineRef {
   line_id: number
   chapter_id: number
+}
+
+export interface PgnCounters {
+  total: number
+  learned: number
+  mastered: number
+  due: number
+  /** Earliest due among learned (non-archived) lines; null if none learned. */
+  nextDueAt: Date | null
+  /** Lines whose first-ever review event falls within the last 7 days. */
+  learnedThisWeek: number
+}
+
+const EMPTY_PGN_COUNTERS: PgnCounters = {
+  total: 0,
+  learned: 0,
+  mastered: 0,
+  due: 0,
+  nextDueAt: null,
+  learnedThisWeek: 0,
 }
 
 export interface ArchivedLineEntry {
@@ -427,16 +447,24 @@ export class Repository {
     return `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${values}`
   }
 
+  private buildBatchInsert(
+    table: string,
+    columns: string[],
+    rows: unknown[][],
+  ): SqlStatement[] {
+    return this.batchChunks(columns.length, rows).map((chunk) => ({
+      sql: this.insertSql(table, columns, chunk.length),
+      params: chunk.flat(),
+    }))
+  }
+
   private async batchInsert(
     table: string,
     columns: string[],
     rows: unknown[][],
   ): Promise<void> {
-    for (const chunk of this.batchChunks(columns.length, rows)) {
-      await this.sql.execute(
-        this.insertSql(table, columns, chunk.length),
-        chunk.flat(),
-      )
+    for (const st of this.buildBatchInsert(table, columns, rows)) {
+      await this.sql.execute(st.sql, st.params)
     }
   }
 
@@ -661,169 +689,184 @@ export class Repository {
     move_misses?: unknown[]
     puzzle_attempts?: unknown[]
   }): Promise<void> {
-    for (const t of TABLES_CHILD_FIRST) {
-      await this.sql.execute(`DELETE FROM ${t}`)
-    }
+    // The whole restore — wipe plus reinsert — runs as ONE transaction via
+    // executeAtomic. A crash or bad row can no longer leave a half-empty DB:
+    // either the snapshot lands complete or the previous data stays.
+    const statements: SqlStatement[] = TABLES_CHILD_FIRST.map((t) => ({
+      sql: `DELETE FROM ${t}`,
+      params: [],
+    }))
 
     const rec = (row: unknown) => row as Record<string, unknown>
-    await this.batchInsert(
-      'pgns',
-      [
-        'id',
-        'name',
-        'source_path',
-        'author',
-        'lichess_study_id',
-        'is_challenge',
-        'imported_at',
-      ],
-      snap.pgns.map(rec).map((r) => [
-        r.id,
-        r.name,
-        r.source_path ?? null,
-        r.author ?? null,
-        // Backups predating the Lichess import restore with no study origin.
-        r.lichess_study_id ?? null,
-        // Backups predating challenge courses restore as study courses.
-        r.is_challenge ?? 0,
-        r.imported_at,
-      ]),
-    )
-    await this.batchInsert(
-      'chapters',
-      ['id', 'pgn_id', 'name', 'user_side', 'intro_comment'],
-      snap.chapters
-        .map(rec)
-        .map((r) => [
+    statements.push(
+      ...this.buildBatchInsert(
+        'pgns',
+        [
+          'id',
+          'name',
+          'source_path',
+          'author',
+          'lichess_study_id',
+          'is_challenge',
+          'imported_at',
+        ],
+        snap.pgns.map(rec).map((r) => [
           r.id,
-          r.pgn_id,
           r.name,
-          r.user_side,
-          r.intro_comment ?? null,
+          r.source_path ?? null,
+          r.author ?? null,
+          // Backups predating the Lichess import restore with no study origin.
+          r.lichess_study_id ?? null,
+          // Backups predating challenge courses restore as study courses.
+          r.is_challenge ?? 0,
+          r.imported_at,
         ]),
-    )
-    await this.batchInsert(
-      'cards',
-      ['id', 'chapter_id', 'fen_canonical', 'refutations', 'comment', 'shapes'],
-      snap.cards.map(rec).map((r) => [
-        r.id,
-        r.chapter_id,
-        r.fen_canonical,
-        r.refutations,
-        r.comment ?? null,
-        // Backups predating the shapes column restore without annotations.
-        r.shapes ?? null,
-      ]),
-    )
-    await this.batchInsert(
-      'lines',
-      [
-        'id',
-        'chapter_id',
-        'dfs_index',
-        'steps',
-        'intro_comment',
-        'is_archived',
-        'archived_at',
-      ],
-      snap.lines
-        .map(rec)
-        .map((r) => [
+      ),
+      ...this.buildBatchInsert(
+        'chapters',
+        ['id', 'pgn_id', 'name', 'user_side', 'intro_comment'],
+        snap.chapters
+          .map(rec)
+          .map((r) => [
+            r.id,
+            r.pgn_id,
+            r.name,
+            r.user_side,
+            r.intro_comment ?? null,
+          ]),
+      ),
+      ...this.buildBatchInsert(
+        'cards',
+        [
+          'id',
+          'chapter_id',
+          'fen_canonical',
+          'refutations',
+          'comment',
+          'shapes',
+        ],
+        snap.cards.map(rec).map((r) => [
           r.id,
           r.chapter_id,
-          r.dfs_index,
-          r.steps,
-          r.intro_comment ?? null,
-          (r.is_archived as number | undefined) ?? 0,
-          (r.archived_at as string | null | undefined) ?? null,
+          r.fen_canonical,
+          r.refutations,
+          r.comment ?? null,
+          // Backups predating the shapes column restore without annotations.
+          r.shapes ?? null,
         ]),
-    )
-    await this.batchInsert(
-      'line_states',
-      [
-        'line_id',
-        'profile_id',
-        'stability',
-        'difficulty',
-        'due',
-        'state',
-        'reps',
-        'lapses',
-        'consecutive_correct',
-        'learning_steps',
-        'last_review',
-      ],
-      snap.line_states.map(rec).map((r) => [
-        r.line_id,
-        r.profile_id,
-        r.stability,
-        r.difficulty,
-        r.due,
-        r.state,
-        r.reps,
-        r.lapses,
-        r.consecutive_correct,
-        // Backups predating the learning-steps column restore at step 0.
-        (r.learning_steps as number | undefined) ?? 0,
-        r.last_review ?? null,
-      ]),
-    )
-    await this.batchInsert(
-      'review_events',
-      [
-        'id',
-        'line_id',
-        'profile_id',
-        'ts',
-        'outcome',
-        'retries_used_count',
-        'rating',
-        'duration_ms',
-      ],
-      snap.review_events.map(rec).map((r) => [
-        r.id,
-        r.line_id,
-        r.profile_id,
-        r.ts,
-        r.outcome,
-        r.retries_used_count,
-        r.rating,
-        // Backups predating the duration column restore untimed.
-        r.duration_ms ?? null,
-      ]),
-    )
-    await this.batchInsert(
-      'move_misses',
-      [
-        'id',
-        'card_id',
-        'line_id',
-        'profile_id',
-        'ts',
-        'kind',
-        'played_san',
-        'expected_san',
-      ],
-      (snap.move_misses ?? [])
-        .map(rec)
-        .map((r) => [
+      ),
+      ...this.buildBatchInsert(
+        'lines',
+        [
+          'id',
+          'chapter_id',
+          'dfs_index',
+          'steps',
+          'intro_comment',
+          'is_archived',
+          'archived_at',
+        ],
+        snap.lines
+          .map(rec)
+          .map((r) => [
+            r.id,
+            r.chapter_id,
+            r.dfs_index,
+            r.steps,
+            r.intro_comment ?? null,
+            (r.is_archived as number | undefined) ?? 0,
+            (r.archived_at as string | null | undefined) ?? null,
+          ]),
+      ),
+      ...this.buildBatchInsert(
+        'line_states',
+        [
+          'line_id',
+          'profile_id',
+          'stability',
+          'difficulty',
+          'due',
+          'state',
+          'reps',
+          'lapses',
+          'consecutive_correct',
+          'learning_steps',
+          'last_review',
+        ],
+        snap.line_states.map(rec).map((r) => [
+          r.line_id,
+          r.profile_id,
+          r.stability,
+          r.difficulty,
+          r.due,
+          r.state,
+          r.reps,
+          r.lapses,
+          r.consecutive_correct,
+          // Backups predating the learning-steps column restore at step 0.
+          (r.learning_steps as number | undefined) ?? 0,
+          r.last_review ?? null,
+        ]),
+      ),
+      ...this.buildBatchInsert(
+        'review_events',
+        [
+          'id',
+          'line_id',
+          'profile_id',
+          'ts',
+          'outcome',
+          'retries_used_count',
+          'rating',
+          'duration_ms',
+        ],
+        snap.review_events.map(rec).map((r) => [
           r.id,
-          r.card_id,
           r.line_id,
           r.profile_id,
           r.ts,
-          r.kind,
-          r.played_san,
-          r.expected_san ?? null,
+          r.outcome,
+          r.retries_used_count,
+          r.rating,
+          // Backups predating the duration column restore untimed.
+          r.duration_ms ?? null,
         ]),
+      ),
+      ...this.buildBatchInsert(
+        'move_misses',
+        [
+          'id',
+          'card_id',
+          'line_id',
+          'profile_id',
+          'ts',
+          'kind',
+          'played_san',
+          'expected_san',
+        ],
+        (snap.move_misses ?? [])
+          .map(rec)
+          .map((r) => [
+            r.id,
+            r.card_id,
+            r.line_id,
+            r.profile_id,
+            r.ts,
+            r.kind,
+            r.played_san,
+            r.expected_san ?? null,
+          ]),
+      ),
+      ...this.buildBatchInsert(
+        'puzzle_attempts',
+        ['id', 'card_id', 'profile_id', 'ts', 'correct'],
+        (snap.puzzle_attempts ?? [])
+          .map(rec)
+          .map((r) => [r.id, r.card_id, r.profile_id, r.ts, r.correct]),
+      ),
     )
-    await this.batchInsert(
-      'puzzle_attempts',
-      ['id', 'card_id', 'profile_id', 'ts', 'correct'],
-      (snap.puzzle_attempts ?? [])
-        .map(rec)
-        .map((r) => [r.id, r.card_id, r.profile_id, r.ts, r.correct]),
-    )
+
+    await this.sql.executeAtomic(statements)
   }
 
   // Row → domain mappers. The steps-JSON decode and the TEXT→Date decode are
@@ -900,6 +943,39 @@ export class Repository {
       [chapterId],
     )
     return rows.map((r) => this.mapLineRow(r))
+  }
+
+  /**
+   * Every active line of a PGN in one query (chapter, then dfs order) — the
+   * sidebar groups them by chapter_id instead of issuing per-chapter reads.
+   */
+  async getLinesForPgn(pgnId: number): Promise<PersistedLine[]> {
+    const rows = await this.sql.select<LineRowRaw>(
+      `SELECT l.id, l.chapter_id, l.dfs_index, l.steps, l.intro_comment
+       FROM lines l
+       INNER JOIN chapters c ON c.id = l.chapter_id
+       WHERE c.pgn_id = ? AND l.is_archived = 0
+       ORDER BY l.chapter_id, l.dfs_index, l.id`,
+      [pgnId],
+    )
+    return rows.map((r) => this.mapLineRow(r))
+  }
+
+  /** Companion to getLinesForPgn: all line states of a PGN in one query. */
+  async getLineStatesForPgn(
+    pgnId: number,
+    profileId: string = DEFAULT_PROFILE,
+  ): Promise<PersistedLineState[]> {
+    const rows = await this.sql.select<LineStateRowRaw>(
+      `SELECT ls.line_id, ls.profile_id, ls.stability, ls.difficulty, ls.due,
+              ls.state, ls.reps, ls.lapses, ls.consecutive_correct, ls.learning_steps, ls.last_review
+       FROM line_states ls
+       INNER JOIN lines l ON l.id = ls.line_id
+       INNER JOIN chapters c ON c.id = l.chapter_id
+       WHERE c.pgn_id = ? AND ls.profile_id = ? AND l.is_archived = 0`,
+      [pgnId, profileId],
+    )
+    return rows.map((r) => this.mapLineStateRow(r))
   }
 
   async getDominatedLinesForChapter(
@@ -1389,80 +1465,80 @@ export class Repository {
     pgnId: number,
     now: Date = new Date(),
     profileId: string = DEFAULT_PROFILE,
-  ): Promise<{
-    total: number
-    learned: number
-    mastered: number
-    due: number
-    /** Earliest due among learned (non-archived) lines; null if none learned. */
-    nextDueAt: Date | null
-    /** Lines whose first-ever review event falls within the last 7 days. */
-    learnedThisWeek: number
-  }> {
-    const [{ n: total }] = await this.sql.select<{ n: number }>(
-      `SELECT COUNT(*) AS n
+  ): Promise<PgnCounters> {
+    const all = await this.getAllPgnCounters(now, profileId)
+    return all.get(pgnId) ?? EMPTY_PGN_COUNTERS
+  }
+
+  /**
+   * Counters for every PGN in the library at once — three GROUP BY queries
+   * total instead of six per course, so the library screen (which re-polls
+   * every 30s) stays flat as the collection grows. PGNs with no active lines
+   * are absent from the map; callers default to EMPTY_PGN_COUNTERS semantics.
+   */
+  async getAllPgnCounters(
+    now: Date = new Date(),
+    profileId: string = DEFAULT_PROFILE,
+  ): Promise<Map<number, PgnCounters>> {
+    const totals = await this.sql.select<{ pgn_id: number; n: number }>(
+      `SELECT c.pgn_id AS pgn_id, COUNT(*) AS n
        FROM lines l
        INNER JOIN chapters c ON c.id = l.chapter_id
-       WHERE c.pgn_id = ? AND l.is_archived = 0`,
-      [pgnId],
+       WHERE l.is_archived = 0
+       GROUP BY c.pgn_id`,
     )
-    const [{ n: learned }] = await this.sql.select<{ n: number }>(
-      `SELECT COUNT(*) AS n
-       FROM line_states ls
-       INNER JOIN lines l ON l.id = ls.line_id
-       INNER JOIN chapters c ON c.id = l.chapter_id
-       WHERE c.pgn_id = ? AND ls.profile_id = ? AND ls.state != 'new' AND l.is_archived = 0`,
-      [pgnId, profileId],
-    )
-    const [{ n: due }] = await this.sql.select<{ n: number }>(
-      `SELECT COUNT(*) AS n
-       FROM line_states ls
-       INNER JOIN lines l ON l.id = ls.line_id
-       INNER JOIN chapters c ON c.id = l.chapter_id
-       WHERE c.pgn_id = ? AND ls.profile_id = ?
-         AND ls.state != 'new' AND ls.due <= ? AND l.is_archived = 0`,
-      [pgnId, profileId, now.toISOString()],
-    )
-    const [{ n: mastered }] = await this.sql.select<{ n: number }>(
-      `SELECT COUNT(*) AS n
-       FROM line_states ls
-       INNER JOIN lines l ON l.id = ls.line_id
-       INNER JOIN chapters c ON c.id = l.chapter_id
-       WHERE c.pgn_id = ? AND ls.profile_id = ?
-         AND ${masteryPredicateSql('ls')} AND l.is_archived = 0`,
-      [pgnId, profileId],
-    )
-    const [{ next_due: nextDue }] = await this.sql.select<{
+    const states = await this.sql.select<{
+      pgn_id: number
+      learned: number
+      due: number
+      mastered: number
       next_due: string | null
     }>(
-      `SELECT MIN(ls.due) AS next_due
+      `SELECT c.pgn_id AS pgn_id,
+              SUM(CASE WHEN ls.state != 'new' THEN 1 ELSE 0 END) AS learned,
+              SUM(CASE WHEN ls.state != 'new' AND ls.due <= ? THEN 1 ELSE 0 END) AS due,
+              SUM(CASE WHEN ${masteryPredicateSql('ls')} THEN 1 ELSE 0 END) AS mastered,
+              MIN(CASE WHEN ls.state != 'new' THEN ls.due END) AS next_due
        FROM line_states ls
        INNER JOIN lines l ON l.id = ls.line_id
        INNER JOIN chapters c ON c.id = l.chapter_id
-       WHERE c.pgn_id = ? AND ls.profile_id = ?
-         AND ls.state != 'new' AND l.is_archived = 0`,
-      [pgnId, profileId],
+       WHERE ls.profile_id = ? AND l.is_archived = 0
+       GROUP BY c.pgn_id`,
+      [now.toISOString(), profileId],
     )
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const [{ n: learnedThisWeek }] = await this.sql.select<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM (
-         SELECT re.line_id
+    const weekly = await this.sql.select<{ pgn_id: number; n: number }>(
+      `SELECT pgn_id, COUNT(*) AS n FROM (
+         SELECT c.pgn_id AS pgn_id, re.line_id
          FROM review_events re
          INNER JOIN lines l ON l.id = re.line_id
          INNER JOIN chapters c ON c.id = l.chapter_id
-         WHERE c.pgn_id = ? AND re.profile_id = ? AND l.is_archived = 0
+         WHERE re.profile_id = ? AND l.is_archived = 0
          GROUP BY re.line_id
          HAVING MIN(re.ts) >= ?
-       )`,
-      [pgnId, profileId, weekAgo.toISOString()],
+       )
+       GROUP BY pgn_id`,
+      [profileId, weekAgo.toISOString()],
     )
-    return {
-      total,
-      learned,
-      mastered,
-      due,
-      nextDueAt: nextDue ? new Date(nextDue) : null,
-      learnedThisWeek,
+
+    const out = new Map<number, PgnCounters>()
+    const entry = (pgnId: number): PgnCounters => {
+      let e = out.get(pgnId)
+      if (!e) {
+        e = { ...EMPTY_PGN_COUNTERS }
+        out.set(pgnId, e)
+      }
+      return e
     }
+    for (const r of totals) entry(r.pgn_id).total = r.n
+    for (const r of states) {
+      const e = entry(r.pgn_id)
+      e.learned = r.learned
+      e.due = r.due
+      e.mastered = r.mastered
+      e.nextDueAt = r.next_due ? new Date(r.next_due) : null
+    }
+    for (const r of weekly) entry(r.pgn_id).learnedThisWeek = r.n
+    return out
   }
 }

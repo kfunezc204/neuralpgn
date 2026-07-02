@@ -14,18 +14,11 @@ import { formatNextReview } from '../lib/NextReviewFormatter.ts'
 import { summarizeDay } from '../lib/DailySummary.ts'
 import { fetchActiveWeakPointCount } from '../lib/WeakPointDeck.ts'
 import type { DailySummaryResult } from '../lib/DailySummary.ts'
-import type { PgnSummary } from '../lib/Repository.ts'
+import type { PgnCounters, PgnSummary } from '../lib/Repository.ts'
 
 interface PgnCardData {
   pgn: PgnSummary
-  counters: {
-    total: number
-    learned: number
-    mastered: number
-    due: number
-    nextDueAt: Date | null
-    learnedThisWeek: number
-  }
+  counters: PgnCounters
   weakPoints: number
 }
 
@@ -46,14 +39,26 @@ export function LibraryHome() {
       if (!opts?.silent) setLoading(true)
       const list = await repo.listPgns()
       const now = new Date()
-      const data: PgnCardData[] = []
-      for (const p of list) {
-        const [counters, weakPoints] = await Promise.all([
-          repo.getPgnCounters(p.id, now),
-          fetchActiveWeakPointCount(repo, p.id),
-        ])
-        data.push({ pgn: p, counters, weakPoints })
+      // One aggregate query set for the whole library; weak-point counts are
+      // TS-side aggregations (streak logic), so those stay per-course but run
+      // in parallel instead of serially.
+      const [allCounters, weakPointsList] = await Promise.all([
+        repo.getAllPgnCounters(now),
+        Promise.all(list.map((p) => fetchActiveWeakPointCount(repo, p.id))),
+      ])
+      const empty: PgnCounters = {
+        total: 0,
+        learned: 0,
+        mastered: 0,
+        due: 0,
+        nextDueAt: null,
+        learnedThisWeek: 0,
       }
+      const data: PgnCardData[] = list.map((p, i) => ({
+        pgn: p,
+        counters: allCounters.get(p.id) ?? empty,
+        weakPoints: weakPointsList[i],
+      }))
       setCards(data)
       const dueLines = await repo.getDueLinesAllChapters(now)
       setGlobalDueCount(dueLines.length)

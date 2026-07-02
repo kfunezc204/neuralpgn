@@ -157,19 +157,32 @@ export function CourseLayout() {
     const me = summaries.find((s) => s.id === id) ?? null
     setPgn(me)
 
-    const chapterRows: ChapterRow[] = await repo.listChapters(id)
+    // Two PGN-wide queries instead of two per chapter; group in memory.
+    const [chapterRows, allLines, allStates] = await Promise.all([
+      repo.listChapters(id),
+      repo.getLinesForPgn(id),
+      repo.getLineStatesForPgn(id),
+    ])
+    const linesByChapter = new Map<number, PersistedLine[]>()
+    for (const l of allLines) {
+      const bucket = linesByChapter.get(l.chapter_id)
+      if (bucket) bucket.push(l)
+      else linesByChapter.set(l.chapter_id, [l])
+    }
+    const stateByLine = new Map<number, PersistedLineState>(
+      allStates.map((s) => [s.line_id, s]),
+    )
     const built: CourseSidebarChapter[] = []
     for (const c of chapterRows) {
-      const [lines, states] = await Promise.all([
-        repo.getLinesForChapter(c.id),
-        repo.getLineStatesForChapter(c.id),
-      ])
+      const lines = linesByChapter.get(c.id) ?? []
       // Chapter with all variants archived: skip from active sidebar.
       // Its archived variants are still reachable from the 📁 Archivo section.
       if (lines.length === 0) continue
-      const stateMap = new Map<number, PersistedLineState>(
-        states.map((s) => [s.line_id, s]),
-      )
+      const stateMap = new Map<number, PersistedLineState>()
+      for (const l of lines) {
+        const s = stateByLine.get(l.id)
+        if (s) stateMap.set(l.id, s)
+      }
       built.push({
         id: c.id,
         name: c.name,

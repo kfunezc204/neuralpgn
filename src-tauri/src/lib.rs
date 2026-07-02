@@ -62,6 +62,78 @@ fn fs_list_dir(app: tauri::AppHandle, dir: String) -> Result<Vec<String>, String
     Ok(names)
 }
 
+#[derive(serde::Deserialize)]
+pub struct AtomicStatement {
+    sql: String,
+    params: Vec<serde_json::Value>,
+}
+
+/// Run a batch of statements inside ONE SQLite transaction. plugin-sql's
+/// execute() goes through a connection pool, so BEGIN/COMMIT issued as
+/// separate calls can land on different connections — this command opens its
+/// own single connection to the same DB file (resolved exactly like the
+/// plugin resolves `sqlite:<name>`: relative to app_config_dir) and commits
+/// all-or-nothing. Used by the backup restore path, where a partial write
+/// would leave a half-empty database.
+#[tauri::command]
+async fn sql_execute_atomic(
+    app: tauri::AppHandle,
+    db: String,
+    statements: Vec<AtomicStatement>,
+) -> Result<(), String> {
+    use sqlx::sqlite::SqliteConnectOptions;
+    use sqlx::{Connection, Executor};
+    use std::str::FromStr;
+    use std::time::Duration;
+
+    // The db argument is a bare filename (e.g. "neuralpgn.<id>.db"); reject
+    // anything with path components so it can't escape the app config dir.
+    if PathBuf::from(&db).components().count() != 1
+        || PathBuf::from(&db)
+            .components()
+            .any(|c| !matches!(c, Component::Normal(_)))
+    {
+        return Err(format!("invalid database name: {db}"));
+    }
+    let base = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    let db_path = base.join(&db);
+    let url = format!(
+        "sqlite:{}",
+        db_path
+            .to_str()
+            .ok_or_else(|| "invalid database path".to_string())?
+    );
+
+    let options = SqliteConnectOptions::from_str(&url)
+        .map_err(|e| e.to_string())?
+        // The plugin's pool holds the file open; wait out its short locks
+        // instead of failing immediately.
+        .busy_timeout(Duration::from_secs(10));
+    let mut conn = sqlx::SqliteConnection::connect_with(&options)
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut tx = conn.begin().await.map_err(|e| e.to_string())?;
+    for st in &statements {
+        let mut query = sqlx::query(&st.sql);
+        // Same JsonValue binding rules as tauri-plugin-sql's execute(), so
+        // values round-trip identically whichever path wrote them.
+        for value in &st.params {
+            if value.is_null() {
+                query = query.bind(None::<serde_json::Value>);
+            } else if value.is_string() {
+                query = query.bind(value.as_str().unwrap().to_owned());
+            } else if let Some(number) = value.as_number() {
+                query = query.bind(number.as_f64().unwrap_or_default());
+            } else {
+                query = query.bind(value.clone());
+            }
+        }
+        tx.execute(query).await.map_err(|e| e.to_string())?;
+    }
+    tx.commit().await.map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 fn app_data_dir(app: tauri::AppHandle) -> Result<String, String> {
     let dir = app
@@ -83,6 +155,7 @@ pub fn run() {
             fs_remove,
             fs_list_dir,
             app_data_dir,
+            sql_execute_atomic,
         ]);
 
     #[cfg(desktop)]
