@@ -30,7 +30,11 @@ describe('Repository.deleteLinesHard (bulk)', () => {
 
     const sched = new LineScheduler()
     let state = sched.initial(new Date('2025-01-01T00:00:00Z'))
-    state = sched.next(state, 'pass_all_first', new Date('2025-01-02T00:00:00Z'))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date('2025-01-02T00:00:00Z'),
+    )
     await repo.saveLineState(lines[0].id, state)
     await repo.saveLineState(lines[1].id, state)
     await repo.logReviewEvent({
@@ -77,9 +81,7 @@ describe('Repository.deleteLinesHard (bulk)', () => {
     const archived = lines[0].id
     await repo.archiveLine(archived)
 
-    await expect(
-      repo.deleteLinesHard([archived, 999_999]),
-    ).rejects.toThrow()
+    await expect(repo.deleteLinesHard([archived, 999_999])).rejects.toThrow()
 
     expect(await repo.getLine(archived)).not.toBeNull()
   })

@@ -85,7 +85,8 @@ export function KebabMenu({ items, ariaLabel }: KebabMenuProps) {
       >
         ⋯
       </button>
-      {open && pos &&
+      {open &&
+        pos &&
         createPortal(
           <div
             ref={menuRef}
@@ -105,7 +106,9 @@ export function KebabMenu({ items, ariaLabel }: KebabMenuProps) {
                   it.onClick()
                 }}
                 className={`flex w-full items-center px-3 py-1.5 text-left text-sm transition-colors duration-150 hover:bg-surface-3 ${
-                  it.danger ? 'text-danger hover:bg-danger-soft' : 'text-ink-muted'
+                  it.danger
+                    ? 'text-danger hover:bg-danger-soft'
+                    : 'text-ink-muted'
                 }`}
               >
                 {it.label}

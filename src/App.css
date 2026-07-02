@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/jetbrains-mono";
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
 
 /*
  * Design tokens — single source of truth for the dark "refined" theme.
@@ -9,9 +9,9 @@
  * One brand accent (gold); ok/danger are desaturated so they don't compete.
  */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, "Cascadia Mono",
-    monospace;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
 
   /* Surfaces */
   --color-surface-0: #0c0d10;

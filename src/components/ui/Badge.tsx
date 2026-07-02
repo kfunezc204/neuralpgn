@@ -15,7 +15,11 @@ interface BadgeProps {
   children: ReactNode
 }
 
-export function Badge({ tone = 'neutral', className = '', children }: BadgeProps) {
+export function Badge({
+  tone = 'neutral',
+  className = '',
+  children,
+}: BadgeProps) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-xs tabular-nums ${tones[tone]} ${className}`}

@@ -38,7 +38,10 @@ describe('ProfileStore', () => {
 
     const profile = await store.createProfile('Kevin')
 
-    expect(store.getActiveProfile()).toMatchObject({ id: profile.id, name: 'Kevin' })
+    expect(store.getActiveProfile()).toMatchObject({
+      id: profile.id,
+      name: 'Kevin',
+    })
   })
 
   it('listProfiles returns all profiles in creation order, second does not steal active', async () => {
@@ -105,7 +108,9 @@ describe('ProfileStore', () => {
   it('deleteProfile throws for an unknown id', async () => {
     const { store } = await freshStore()
     await store.createProfile('Kevin')
-    await expect(store.deleteProfile('nope')).rejects.toThrow(/unknown profile/i)
+    await expect(store.deleteProfile('nope')).rejects.toThrow(
+      /unknown profile/i,
+    )
   })
 
   it('a fresh ProfileStore.load() over a populated file restores profiles and active id', async () => {

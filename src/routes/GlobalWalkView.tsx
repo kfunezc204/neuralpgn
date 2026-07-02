@@ -138,9 +138,7 @@ export function GlobalWalkView() {
           >
             ← Biblioteca
           </Link>
-          <div className="text-sm font-medium text-ink-muted">
-            Repasar todo
-          </div>
+          <div className="text-sm font-medium text-ink-muted">Repasar todo</div>
           <span className="font-mono text-xs tabular-nums text-ink-muted">
             Línea {poolIdx + 1} / {pool.length} · {ref.chapter_name}
           </span>

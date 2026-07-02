@@ -73,9 +73,7 @@ export function PgnDropZone({ onPgnText }: PgnDropZoneProps) {
     >
       <div className="rounded-xl border-2 border-dashed border-accent bg-surface-1/90 px-8 py-6 text-center">
         {rejected ? (
-          <p className="text-sm font-medium text-danger">
-            Solo archivos .pgn
-          </p>
+          <p className="text-sm font-medium text-danger">Solo archivos .pgn</p>
         ) : (
           <>
             <p className="text-3xl">♞</p>

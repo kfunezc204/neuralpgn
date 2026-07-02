@@ -39,7 +39,11 @@ export function formatProfileSummary(
 
 function formatLastUsed(lastUsed: Date, now: Date): string {
   const dayMs = 24 * 60 * 60 * 1000
-  const a = new Date(lastUsed.getFullYear(), lastUsed.getMonth(), lastUsed.getDate())
+  const a = new Date(
+    lastUsed.getFullYear(),
+    lastUsed.getMonth(),
+    lastUsed.getDate(),
+  )
   const b = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const days = Math.round((b.getTime() - a.getTime()) / dayMs)
   if (days <= 0) return 'hoy'

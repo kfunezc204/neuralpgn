@@ -38,7 +38,7 @@ async function logEvent(
 }
 
 describe('Repository — getReviewActivitySince', () => {
-  it('returns events since the cutoff with each line\'s first-ever timestamp', async () => {
+  it("returns events since the cutoff with each line's first-ever timestamp", async () => {
     const { repo, lines } = await seedTwoLines()
     // Line 0: learned long ago, reviewed today.
     await logEvent(repo, lines[0].id, '2026-06-01T10:00:00.000Z')

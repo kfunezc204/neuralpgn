@@ -12,7 +12,12 @@ interface ToastProps {
   action?: ToastAction
 }
 
-export function Toast({ message, durationMs = 3000, onDismiss, action }: ToastProps) {
+export function Toast({
+  message,
+  durationMs = 3000,
+  onDismiss,
+  action,
+}: ToastProps) {
   useEffect(() => {
     const t = setTimeout(onDismiss, durationMs)
     return () => clearTimeout(t)

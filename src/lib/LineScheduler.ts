@@ -7,11 +7,7 @@ import {
   type FSRS,
   type Grade,
 } from 'ts-fsrs'
-import type {
-  LineOutcome,
-  LineSrsState,
-  LineSrsStateName,
-} from './types.ts'
+import type { LineOutcome, LineSrsState, LineSrsStateName } from './types.ts'
 
 const OUTCOME_TO_RATING: Record<LineOutcome, Grade> = {
   pass_all_first: Rating.Good,
@@ -45,7 +41,10 @@ function nameToFsrsState(n: LineSrsStateName): State {
   }
 }
 
-function fromFsrsCard(card: FsrsCard, consecutive_correct: number): LineSrsState {
+function fromFsrsCard(
+  card: FsrsCard,
+  consecutive_correct: number,
+): LineSrsState {
   return {
     stability: card.stability,
     difficulty: card.difficulty,

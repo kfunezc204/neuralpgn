@@ -18,9 +18,7 @@ export function SelectionBulkBar({
   return (
     <div className="border-t border-line bg-surface-2 px-2 py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.35)]">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-ink-muted">
-          {count} sel
-        </span>
+        <span className="text-xs font-medium text-ink-muted">{count} sel</span>
         <div className="flex flex-1 flex-wrap items-center gap-1">
           {actions.map((action) => (
             <button

@@ -15,7 +15,10 @@ export async function writeDailyNewLimit(
   repo: Repository,
   limit: number,
 ): Promise<void> {
-  await repo.setSetting(DAILY_NEW_LIMIT_KEY, String(Math.max(0, Math.floor(limit))))
+  await repo.setSetting(
+    DAILY_NEW_LIMIT_KEY,
+    String(Math.max(0, Math.floor(limit))),
+  )
 }
 
 export const SOUND_ENABLED_KEY = 'sound_enabled'

@@ -25,7 +25,10 @@ interface PlyContext {
   isWhite: boolean
 }
 
-function parseStart(initialFen: string | null): { startMove: number; startSide: 'w' | 'b' } {
+function parseStart(initialFen: string | null): {
+  startMove: number
+  startSide: 'w' | 'b'
+} {
   if (!initialFen) return { startMove: 1, startSide: 'w' }
   const fields = initialFen.split(' ')
   const side = fields[1] === 'b' ? 'b' : 'w'
@@ -47,7 +50,10 @@ function plyContext(
   return { moveNum: startMove + Math.floor((i + 1) / 2), isWhite: i % 2 === 1 }
 }
 
-function entryRenderableSan(entry: WalkHistoryEntry): { text: string; style: SanStyle } {
+function entryRenderableSan(entry: WalkHistoryEntry): {
+  text: string
+  style: SanStyle
+} {
   switch (entry.kind) {
     case 'correct':
       return { text: entry.san, style: 'correct' }

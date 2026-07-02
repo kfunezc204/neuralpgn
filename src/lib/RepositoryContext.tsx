@@ -43,55 +43,52 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   const appDataRef = useRef<string>('')
   const fsRef = useRef<TauriFsAdapter | null>(null)
 
-  const bootProfile = useCallback(
-    async (profile: Profile) => {
-      setPhase({ kind: 'booting', profile })
-      const dbUrl = `sqlite:${profile.db_filename}`
+  const bootProfile = useCallback(async (profile: Profile) => {
+    setPhase({ kind: 'booting', profile })
+    const dbUrl = `sqlite:${profile.db_filename}`
+    try {
+      const adapter = await TauriSqlAdapter.open(dbUrl)
+      const repo = new Repository(adapter)
+      await repo.migrate()
+      // Feedback sounds honor this profile's persisted preference.
+      setSoundEnabled(await readSoundEnabled(repo))
+      // Selector snapshot: freshest data we can guarantee without hooking
+      // app shutdown. Re-taken on profile switch (see handleRequestSwitch).
       try {
-        const adapter = await TauriSqlAdapter.open(dbUrl)
-        const repo = new Repository(adapter)
-        await repo.migrate()
-        // Feedback sounds honor this profile's persisted preference.
-        setSoundEnabled(await readSoundEnabled(repo))
-        // Selector snapshot: freshest data we can guarantee without hooking
-        // app shutdown. Re-taken on profile switch (see handleRequestSwitch).
-        try {
-          await profileStoreRef.current!.updateSummary(
-            profile.id,
-            await computeProfileSummary(repo),
-          )
-        } catch {
-          // Snapshot failure is non-fatal.
-        }
-        // Best-effort auto-backup once per session.
-        try {
-          const fs = fsRef.current!
-          const manager = new BackupManager(fs, new BackupSerializer(), {
-            dir: `${appDataRef.current}/${BACKUPS_DIR}/${profile.id}`,
-            keep: KEEP_BACKUPS,
-          })
-          await manager.writeBackup(repo)
-        } catch {
-          // Backup failure is non-fatal.
-        }
-        setPhase({ kind: 'ready', profile, repo })
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        try {
-          const fs = fsRef.current!
-          const manager = new BackupManager(fs, new BackupSerializer(), {
-            dir: `${appDataRef.current}/${BACKUPS_DIR}/${profile.id}`,
-            keep: KEEP_BACKUPS,
-          })
-          const backups = await manager.listBackups()
-          setPhase({ kind: 'recovery', profile, error: message, backups })
-        } catch {
-          setPhase({ kind: 'error', error: message })
-        }
+        await profileStoreRef.current!.updateSummary(
+          profile.id,
+          await computeProfileSummary(repo),
+        )
+      } catch {
+        // Snapshot failure is non-fatal.
       }
-    },
-    [],
-  )
+      // Best-effort auto-backup once per session.
+      try {
+        const fs = fsRef.current!
+        const manager = new BackupManager(fs, new BackupSerializer(), {
+          dir: `${appDataRef.current}/${BACKUPS_DIR}/${profile.id}`,
+          keep: KEEP_BACKUPS,
+        })
+        await manager.writeBackup(repo)
+      } catch {
+        // Backup failure is non-fatal.
+      }
+      setPhase({ kind: 'ready', profile, repo })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      try {
+        const fs = fsRef.current!
+        const manager = new BackupManager(fs, new BackupSerializer(), {
+          dir: `${appDataRef.current}/${BACKUPS_DIR}/${profile.id}`,
+          keep: KEEP_BACKUPS,
+        })
+        const backups = await manager.listBackups()
+        setPhase({ kind: 'recovery', profile, error: message, backups })
+      } catch {
+        setPhase({ kind: 'error', error: message })
+      }
+    }
+  }, [])
 
   useEffect(() => {
     void (async () => {
@@ -144,13 +141,16 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
     [bootProfile],
   )
 
-  const handleSwitchFromApp = useCallback(async (id: string) => {
-    const store = profileStoreRef.current!
-    await store.setActiveProfile(id)
-    const profile = store.listProfiles().find((p) => p.id === id)!
-    // Force re-mount of routes by going through booting state.
-    await bootProfile(profile)
-  }, [bootProfile])
+  const handleSwitchFromApp = useCallback(
+    async (id: string) => {
+      const store = profileStoreRef.current!
+      await store.setActiveProfile(id)
+      const profile = store.listProfiles().find((p) => p.id === id)!
+      // Force re-mount of routes by going through booting state.
+      await bootProfile(profile)
+    },
+    [bootProfile],
+  )
 
   const handleRequestSwitch = useCallback(() => {
     const store = profileStoreRef.current!
@@ -275,9 +275,7 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   if (phase.kind === 'error') {
     return (
       <div className="p-6">
-        <h1 className="text-xl font-semibold text-danger">
-          Error al iniciar
-        </h1>
+        <h1 className="text-xl font-semibold text-danger">Error al iniciar</h1>
         <pre className="mt-2 whitespace-pre-wrap text-sm">{phase.error}</pre>
       </div>
     )

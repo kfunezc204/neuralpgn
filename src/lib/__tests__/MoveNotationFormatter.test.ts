@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { formatHistoryAsPgnFlow, type SanStyle } from '../MoveNotationFormatter.ts'
+import {
+  formatHistoryAsPgnFlow,
+  type SanStyle,
+} from '../MoveNotationFormatter.ts'
 
 describe('formatHistoryAsPgnFlow', () => {
   it('returns no tokens for an empty history', () => {
@@ -151,7 +154,9 @@ describe('formatHistoryAsPgnFlow', () => {
 
   it('appends a comment token after a sanned entry that carries a comment', () => {
     const tokens = formatHistoryAsPgnFlow({
-      history: [{ kind: 'correct', san: 'e4', comment: 'Classical pawn break' }],
+      history: [
+        { kind: 'correct', san: 'e4', comment: 'Classical pawn break' },
+      ],
       initialFen: null,
     })
 
@@ -224,7 +229,9 @@ describe('formatHistoryAsPgnFlow', () => {
       currentReplayIndex: null,
     })
 
-    const san = tokens.find((t) => t.kind === 'san') as { isCurrentReplay: boolean }
+    const san = tokens.find((t) => t.kind === 'san') as {
+      isCurrentReplay: boolean
+    }
     expect(san.isCurrentReplay).toBe(false)
   })
 

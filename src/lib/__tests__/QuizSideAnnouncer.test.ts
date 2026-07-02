@@ -3,8 +3,7 @@ import { quizSideAnnouncement } from '../QuizSideAnnouncer.ts'
 
 describe('QuizSideAnnouncer', () => {
   it('announces white-to-move when the FEN active color is "w"', () => {
-    const startpos =
-      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    const startpos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
     expect(quizSideAnnouncement(startpos)).toBe('¡Juegan blancas!')
   })
 

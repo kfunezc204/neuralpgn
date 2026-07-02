@@ -41,11 +41,7 @@ interface CourseSidebarProps {
   onMutate: () => void
 }
 
-function StateIcon({
-  status,
-}: {
-  status: 'new' | 'learning' | 'mastered'
-}) {
+function StateIcon({ status }: { status: 'new' | 'learning' | 'mastered' }) {
   if (status === 'mastered') {
     return (
       <span
@@ -215,15 +211,15 @@ function VariantItem({
           {/* The StateIcon is hidden when the checkbox should be visible
               (fixed for active-scope rows, hover for everyone else). */}
           <span
-            className={`${
-              showFixedCheckbox ? 'hidden' : 'group-hover:hidden'
-            }`}
+            className={`${showFixedCheckbox ? 'hidden' : 'group-hover:hidden'}`}
           >
             <StateIcon status={view.status} />
           </span>
           <span
             className={`${
-              showFixedCheckbox ? 'inline-flex' : 'hidden group-hover:inline-flex'
+              showFixedCheckbox
+                ? 'inline-flex'
+                : 'hidden group-hover:inline-flex'
             }`}
           >
             <Checkbox checked={checked} />
@@ -235,9 +231,7 @@ function VariantItem({
       <div className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 group-has-[[aria-expanded='true']]:opacity-100">
         <KebabMenu
           ariaLabel={`Acciones sobre ${label}`}
-          items={[
-            { label: 'Archivar', onClick: () => onArchive(line.id) },
-          ]}
+          items={[{ label: 'Archivar', onClick: () => onArchive(line.id) }]}
         />
       </div>
     </div>
@@ -400,13 +394,8 @@ export function CourseSidebar({
   // `_selectionVersion` is read implicitly via the prop change so React
   // re-renders the whole tree when the parent bumps it.
   const [query, setQuery] = useState('')
-  const [statuses, setStatuses] = useState<ReadonlySet<StatusFilter>>(
-    new Set(),
-  )
-  const criteria = useMemo(
-    () => ({ query, statuses }),
-    [query, statuses],
-  )
+  const [statuses, setStatuses] = useState<ReadonlySet<StatusFilter>>(new Set())
+  const criteria = useMemo(() => ({ query, statuses }), [query, statuses])
   const filtering = isFiltering(criteria)
   const visibleChapters = useMemo(
     () => filterChapters(chapters, criteria, now),
@@ -428,9 +417,7 @@ export function CourseSidebar({
     filtering &&
     selectedLineId !== null &&
     chapters.some((c) => c.lines.some((l) => l.id === selectedLineId)) &&
-    !visibleChapters.some((c) =>
-      c.lines.some((l) => l.id === selectedLineId),
-    )
+    !visibleChapters.some((c) => c.lines.some((l) => l.id === selectedLineId))
 
   function toggleStatus(value: StatusFilter) {
     setStatuses((prev) => {

@@ -80,7 +80,11 @@ describe('LineScheduler — learning-step graduation', () => {
     const fresh = sched.next(sched.initial(t0), 'pass_all_first', t0)
     // Strip the field, as a row written before the migration would load.
     const { learning_steps: _ls, ...legacy } = fresh
-    const state = sched.next(legacy, 'pass_all_first', new Date(t0.getTime() + 10 * MINUTE))
+    const state = sched.next(
+      legacy,
+      'pass_all_first',
+      new Date(t0.getTime() + 10 * MINUTE),
+    )
 
     expect(state.state).toBe('learning')
     expect(state.learning_steps).toBe(1)
@@ -93,9 +97,21 @@ describe('LineScheduler — fail resets streak and drops stability', () => {
     const t0 = new Date('2025-01-01T00:00:00Z')
 
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 3 * 86400_000))
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 6 * 86400_000))
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 9 * 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 3 * 86400_000),
+    )
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 6 * 86400_000),
+    )
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 9 * 86400_000),
+    )
 
     expect(state.consecutive_correct).toBe(3)
     const stabilityBefore = state.stability

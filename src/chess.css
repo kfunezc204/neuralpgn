@@ -1,5 +1,5 @@
-@import "chessground/assets/chessground.base.css";
-@import "chessground/assets/chessground.cburnett.css";
+@import 'chessground/assets/chessground.base.css';
+@import 'chessground/assets/chessground.cburnett.css';
 
 /*
  * Tablero madera propio (sustituye chessground.brown.css, que también

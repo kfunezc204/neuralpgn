@@ -34,7 +34,10 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     context: 'Sidebar del curso',
     shortcuts: [
-      { keys: 'Shift + clic', description: 'Seleccionar un rango de variantes' },
+      {
+        keys: 'Shift + clic',
+        description: 'Seleccionar un rango de variantes',
+      },
       { keys: 'Esc', description: 'Limpiar la selección múltiple' },
     ],
   },

@@ -27,6 +27,8 @@ for (const file of process.argv.slice(2)) {
     Object.fromEntries(warnCodes),
   )
   for (const ch of result.chapters.slice(0, 10)) {
-    console.log(`  - ${ch.name}: ${ch.line_ids.length} lines, side=${ch.user_side}`)
+    console.log(
+      `  - ${ch.name}: ${ch.line_ids.length} lines, side=${ch.user_side}`,
+    )
   }
 }

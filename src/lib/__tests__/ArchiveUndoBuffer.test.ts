@@ -28,8 +28,16 @@ describe('ArchiveUndoBuffer', () => {
   it('pushing a second action inside the window replaces the first one (only the latest is undoable)', () => {
     const buf = new ArchiveUndoBuffer()
     const t0 = 1_000_000
-    const A = { kind: 'archive' as const, lineIds: [1], label: 'Variante 1: e4' }
-    const B = { kind: 'archive' as const, lineIds: [2], label: 'Variante 2: d4' }
+    const A = {
+      kind: 'archive' as const,
+      lineIds: [1],
+      label: 'Variante 1: e4',
+    }
+    const B = {
+      kind: 'archive' as const,
+      lineIds: [2],
+      label: 'Variante 2: d4',
+    }
 
     buf.push(A, t0)
     buf.push(B, t0 + 1000)

@@ -139,10 +139,7 @@ export function PuzzleSessionView() {
   if (items.length === 0) {
     return (
       <main className="mx-auto max-w-3xl p-6">
-        <Link
-          to={backHref}
-          className="text-sm text-ink-muted hover:underline"
-        >
+        <Link to={backHref} className="text-sm text-ink-muted hover:underline">
           ← Volver al curso
         </Link>
         <h1 className="mt-6 text-xl font-semibold">🎯 Puntos débiles</h1>
@@ -158,8 +155,7 @@ export function PuzzleSessionView() {
       <main className="mx-auto max-w-3xl p-6">
         <h1 className="text-2xl font-semibold">Sesión de puzzles completa</h1>
         <p className="mt-2 text-ink-muted">
-          Resolviste{' '}
-          <span className="font-semibold text-ok">{solved}</span> de{' '}
+          Resolviste <span className="font-semibold text-ok">{solved}</span> de{' '}
           {items.length} posiciones.
         </p>
         <div className="mt-6 flex gap-2">
@@ -256,9 +252,7 @@ export function PuzzleSessionView() {
               </>
             )}
             {answer !== null && answer.correct && (
-              <p className="text-sm font-medium text-ok">
-                ✓ {answer.played}
-              </p>
+              <p className="text-sm font-medium text-ok">✓ {answer.played}</p>
             )}
             {answer !== null && !answer.correct && (
               <>

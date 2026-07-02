@@ -9,7 +9,10 @@ class NodeSqliteInMemoryAdapter implements SqlAdapter {
     this.db.exec('PRAGMA foreign_keys = ON')
   }
 
-  async execute(sql: string, params: unknown[] = []): Promise<SqlExecuteResult> {
+  async execute(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<SqlExecuteResult> {
     const stmt = this.db.prepare(sql)
     const info = stmt.run(...(params as never[]))
     return {

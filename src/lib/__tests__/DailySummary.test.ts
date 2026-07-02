@@ -28,7 +28,7 @@ describe('DailySummary', () => {
     })
   })
 
-  it('counts today\'s events on previously learned lines as reviews', () => {
+  it("counts today's events on previously learned lines as reviews", () => {
     const events = [
       ev(1, '2026-06-11T09:00:00', '2026-06-01T10:00:00'),
       ev(1, '2026-06-11T13:00:00', '2026-06-01T10:00:00'),

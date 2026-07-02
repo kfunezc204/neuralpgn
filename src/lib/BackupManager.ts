@@ -40,9 +40,7 @@ export class BackupManager {
   async listBackups(): Promise<string[]> {
     const entries = await this.fs.listDir(this.opts.dir)
     return entries
-      .filter(
-        (n) => n.startsWith(BACKUP_PREFIX) && n.endsWith(BACKUP_SUFFIX),
-      )
+      .filter((n) => n.startsWith(BACKUP_PREFIX) && n.endsWith(BACKUP_SUFFIX))
       .sort()
       .reverse()
   }

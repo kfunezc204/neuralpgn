@@ -14,7 +14,11 @@ describe('SelectionScope', () => {
   it('toggle on an empty scope marks the line and adopts that scope', () => {
     const sel = new SelectionScope()
 
-    sel.toggle({ lineId: 42, scopeKey: 'chapter:7', orderedIdsInScope: [10, 42, 99] })
+    sel.toggle({
+      lineId: 42,
+      scopeKey: 'chapter:7',
+      orderedIdsInScope: [10, 42, 99],
+    })
 
     expect(sel.has(42)).toBe(true)
     expect(sel.count()).toBe(1)
@@ -35,11 +39,23 @@ describe('SelectionScope', () => {
 
   it('toggle on a different scope clears the previous selection and starts fresh in the new scope', () => {
     const sel = new SelectionScope()
-    sel.toggle({ lineId: 1, scopeKey: 'chapter:A', orderedIdsInScope: [1, 2, 3] })
-    sel.toggle({ lineId: 2, scopeKey: 'chapter:A', orderedIdsInScope: [1, 2, 3] })
+    sel.toggle({
+      lineId: 1,
+      scopeKey: 'chapter:A',
+      orderedIdsInScope: [1, 2, 3],
+    })
+    sel.toggle({
+      lineId: 2,
+      scopeKey: 'chapter:A',
+      orderedIdsInScope: [1, 2, 3],
+    })
     expect(sel.count()).toBe(2)
 
-    sel.toggle({ lineId: 99, scopeKey: 'chapter:B', orderedIdsInScope: [99, 100] })
+    sel.toggle({
+      lineId: 99,
+      scopeKey: 'chapter:B',
+      orderedIdsInScope: [99, 100],
+    })
 
     expect(sel.getScope()).toBe('chapter:B')
     expect(sel.has(1)).toBe(false)
@@ -64,7 +80,11 @@ describe('SelectionScope', () => {
     sel.toggle({ lineId: 1, scopeKey: 'chapter:A', orderedIdsInScope: [1] })
     sel.clear()
 
-    sel.toggle({ lineId: 50, scopeKey: 'chapter:Z', orderedIdsInScope: [50, 51] })
+    sel.toggle({
+      lineId: 50,
+      scopeKey: 'chapter:Z',
+      orderedIdsInScope: [50, 51],
+    })
 
     expect(sel.getScope()).toBe('chapter:Z')
     expect(sel.has(50)).toBe(true)
@@ -74,9 +94,17 @@ describe('SelectionScope', () => {
     it('marks the inclusive range between the previous anchor and the target in the same scope', () => {
       const sel = new SelectionScope()
       const ordered = [10, 20, 30, 40, 50]
-      sel.toggle({ lineId: 20, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.toggle({
+        lineId: 20,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
 
-      sel.shiftRangeTo({ lineId: 40, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.shiftRangeTo({
+        lineId: 40,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
 
       expect(sel.getScope()).toBe('chapter:1')
       expect(sel.has(20)).toBe(true)
@@ -91,7 +119,11 @@ describe('SelectionScope', () => {
       const sel = new SelectionScope()
       const ordered = [1, 2, 3]
 
-      sel.shiftRangeTo({ lineId: 2, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.shiftRangeTo({
+        lineId: 2,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
 
       expect(sel.getScope()).toBe('chapter:1')
       expect(sel.getIds()).toEqual([2])
@@ -99,7 +131,11 @@ describe('SelectionScope', () => {
 
     it('with a different scope discards the anchor and toggles in the new scope', () => {
       const sel = new SelectionScope()
-      sel.toggle({ lineId: 1, scopeKey: 'chapter:A', orderedIdsInScope: [1, 2, 3] })
+      sel.toggle({
+        lineId: 1,
+        scopeKey: 'chapter:A',
+        orderedIdsInScope: [1, 2, 3],
+      })
 
       sel.shiftRangeTo({
         lineId: 99,
@@ -116,9 +152,17 @@ describe('SelectionScope', () => {
     it('reverse range (target before anchor) still marks inclusive range', () => {
       const sel = new SelectionScope()
       const ordered = [10, 20, 30, 40, 50]
-      sel.toggle({ lineId: 40, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.toggle({
+        lineId: 40,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
 
-      sel.shiftRangeTo({ lineId: 20, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.shiftRangeTo({
+        lineId: 20,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
 
       expect(sel.has(20)).toBe(true)
       expect(sel.has(30)).toBe(true)
@@ -134,7 +178,11 @@ describe('SelectionScope', () => {
       // the broader DB, those ids are not in orderedIdsInScope, so they
       // must NOT be added to the selection.
       const visibleOrdered = [10, 20, 40, 50]
-      sel.toggle({ lineId: 20, scopeKey: 'chapter:1', orderedIdsInScope: visibleOrdered })
+      sel.toggle({
+        lineId: 20,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: visibleOrdered,
+      })
 
       sel.shiftRangeTo({
         lineId: 40,
@@ -153,11 +201,23 @@ describe('SelectionScope', () => {
     it('keeps the existing selection intact and unions in the new range', () => {
       const sel = new SelectionScope()
       const ordered = [1, 2, 3, 4, 5]
-      sel.toggle({ lineId: 1, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
-      sel.toggle({ lineId: 3, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.toggle({
+        lineId: 1,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
+      sel.toggle({
+        lineId: 3,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
       // After two toggles, both 1 and 3 are selected; anchor is on 3.
 
-      sel.shiftRangeTo({ lineId: 5, scopeKey: 'chapter:1', orderedIdsInScope: ordered })
+      sel.shiftRangeTo({
+        lineId: 5,
+        scopeKey: 'chapter:1',
+        orderedIdsInScope: ordered,
+      })
 
       // Range 3..5 added; existing 1 remains; 2 stays unselected.
       expect(sel.has(1)).toBe(true)

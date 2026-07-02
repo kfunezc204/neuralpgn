@@ -62,7 +62,11 @@ describe('Repository — line-as-atom schema', () => {
     const sched = new LineScheduler()
     const t0 = new Date('2025-01-01T00:00:00Z')
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 86400_000),
+    )
     expect(state.state).not.toBe('new')
     // Force due to be definitely in the past for the assertion clock.
     state.due = new Date('2025-01-02T00:00:00Z')
@@ -72,7 +76,10 @@ describe('Repository — line-as-atom schema', () => {
     expect(due).toEqual([{ line_id: line.id, chapter_id: chapter.id }])
 
     // Per-chapter query also returns it.
-    const dueChapter = await repo.getDueLines(chapter.id, new Date('2025-01-05T00:00:00Z'))
+    const dueChapter = await repo.getDueLines(
+      chapter.id,
+      new Date('2025-01-05T00:00:00Z'),
+    )
     expect(dueChapter).toEqual([{ line_id: line.id, chapter_id: chapter.id }])
 
     // If we reset to state=new, getDueLines omits it.
@@ -299,7 +306,9 @@ describe('Repository — line-as-atom schema', () => {
     expect(stillNew.state).toBe('new')
     await repo.saveLineState(line.id, stillNew)
 
-    const due = await repo.getDueLinesAllChapters(new Date('2025-06-01T00:00:00Z'))
+    const due = await repo.getDueLinesAllChapters(
+      new Date('2025-06-01T00:00:00Z'),
+    )
     expect(due).toEqual([])
   })
 
@@ -601,7 +610,10 @@ describe('Repository — PGN-level aggregations', () => {
   it('getNextDueLineForPgn picks the due line from the lowest chapter_id first, then lowest dfs_index within it', async () => {
     const repo = await freshRepo()
     const result = new PgnIngestor().ingest(TWO_CHAPTERS_PGN)
-    const pgnId = await repo.savePgn({ name: 'Cross-chapter due order', result })
+    const pgnId = await repo.savePgn({
+      name: 'Cross-chapter due order',
+      result,
+    })
     const chapters = await repo.getChaptersForPgn(pgnId)
     const linesA = await repo.getLinesForChapter(chapters[0].id)
     const linesB = await repo.getLinesForChapter(chapters[1].id)

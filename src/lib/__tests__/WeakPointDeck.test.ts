@@ -44,8 +44,12 @@ describe('buildWeakPoints — entry threshold', () => {
   })
 
   it('one double-fail or one refutation enters immediately (weight 2)', () => {
-    expect(buildWeakPoints([miss(1, '2026-01-01', 'double_fail')], [])).toHaveLength(1)
-    expect(buildWeakPoints([miss(2, '2026-01-01', 'refutation')], [])).toHaveLength(1)
+    expect(
+      buildWeakPoints([miss(1, '2026-01-01', 'double_fail')], []),
+    ).toHaveLength(1)
+    expect(
+      buildWeakPoints([miss(2, '2026-01-01', 'refutation')], []),
+    ).toHaveLength(1)
   })
 
   it('a failed puzzle attempt adds 1 to the score', () => {

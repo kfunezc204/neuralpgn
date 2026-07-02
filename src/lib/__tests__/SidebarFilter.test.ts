@@ -43,10 +43,14 @@ describe('SidebarFilter — text', () => {
     ])
     const gambito = chapter('Gambito de Dama', [line(['d4', 'd5'], 0)])
 
-    const out = filterChapters([apertura, gambito], {
-      query: 'espanola',
-      statuses: new Set(),
-    }, NOW)
+    const out = filterChapters(
+      [apertura, gambito],
+      {
+        query: 'espanola',
+        statuses: new Set(),
+      },
+      NOW,
+    )
 
     expect(out).toHaveLength(1)
     expect(out[0].name).toBe('Apertura Española')
@@ -98,24 +102,42 @@ describe('SidebarFilter — status', () => {
         state({ state: 'review', due: new Date('2026-06-11T10:00:00') }),
       ],
     ])
-    return { ch: chapter('Mixto', [lNew, lLearning, lMastered, lDue], states), lNew, lLearning, lMastered, lDue }
+    return {
+      ch: chapter('Mixto', [lNew, lLearning, lMastered, lDue], states),
+      lNew,
+      lLearning,
+      lMastered,
+      lDue,
+    }
   }
 
   it('filters by "new"', () => {
     const { ch, lNew } = statusFixture()
-    const out = filterChapters([ch], { query: '', statuses: new Set(['new'] as const) }, NOW)
+    const out = filterChapters(
+      [ch],
+      { query: '', statuses: new Set(['new'] as const) },
+      NOW,
+    )
     expect(out[0].lines.map((l) => l.id)).toEqual([lNew.id])
   })
 
   it('filters by "due"', () => {
     const { ch, lDue } = statusFixture()
-    const out = filterChapters([ch], { query: '', statuses: new Set(['due'] as const) }, NOW)
+    const out = filterChapters(
+      [ch],
+      { query: '', statuses: new Set(['due'] as const) },
+      NOW,
+    )
     expect(out[0].lines.map((l) => l.id)).toEqual([lDue.id])
   })
 
   it('filters by "mastered"', () => {
     const { ch, lMastered } = statusFixture()
-    const out = filterChapters([ch], { query: '', statuses: new Set(['mastered'] as const) }, NOW)
+    const out = filterChapters(
+      [ch],
+      { query: '', statuses: new Set(['mastered'] as const) },
+      NOW,
+    )
     expect(out[0].lines.map((l) => l.id)).toEqual([lMastered.id])
   })
 

@@ -14,7 +14,10 @@ export class TauriSqlAdapter implements SqlAdapter {
     return new TauriSqlAdapter(db)
   }
 
-  async execute(sql: string, params: unknown[] = []): Promise<SqlExecuteResult> {
+  async execute(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<SqlExecuteResult> {
     const r = await this.db.execute(translateParams(sql), params)
     return { lastInsertId: r.lastInsertId, rowsAffected: r.rowsAffected }
   }

@@ -109,7 +109,9 @@ describe('Repository — archive', () => {
     const { repo, chapter, line } = await seedSingleLine()
 
     await repo.archiveLine(line.id)
-    expect((await repo.getLinesForChapter(chapter.id)).map((l) => l.id)).not.toContain(line.id)
+    expect(
+      (await repo.getLinesForChapter(chapter.id)).map((l) => l.id),
+    ).not.toContain(line.id)
 
     await repo.unarchiveLine(line.id)
 
@@ -130,11 +132,18 @@ describe('Repository — archive', () => {
     const sched = new LineScheduler()
     const t0 = new Date('2025-01-01T00:00:00Z')
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 86400_000),
+    )
     state.due = new Date('2025-01-02T00:00:00Z')
     await repo.saveLineState(linesA[0].id, state)
 
-    const before = await repo.getPgnCounters(pgnId, new Date('2025-01-05T00:00:00Z'))
+    const before = await repo.getPgnCounters(
+      pgnId,
+      new Date('2025-01-05T00:00:00Z'),
+    )
     expect(before.total).toBe(totalBefore)
     expect(before.learned).toBe(1)
     expect(before.due).toBe(1)
@@ -142,7 +151,10 @@ describe('Repository — archive', () => {
     // Archive the learned line. Total and learned and due all drop by 1.
     await repo.archiveLine(linesA[0].id)
 
-    const after = await repo.getPgnCounters(pgnId, new Date('2025-01-05T00:00:00Z'))
+    const after = await repo.getPgnCounters(
+      pgnId,
+      new Date('2025-01-05T00:00:00Z'),
+    )
     expect(after.total).toBe(totalBefore - 1)
     expect(after.learned).toBe(0)
     expect(after.due).toBe(0)
@@ -181,7 +193,11 @@ describe('Repository — archive', () => {
     const sched = new LineScheduler()
     const t0 = new Date('2025-01-01T00:00:00Z')
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 86400_000),
+    )
     state.due = new Date('2025-01-02T00:00:00Z')
     await repo.saveLineState(line.id, state)
 
@@ -198,7 +214,11 @@ describe('Repository — archive', () => {
     const sched = new LineScheduler()
     const t0 = new Date('2025-01-01T00:00:00Z')
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 86400_000),
+    )
     state.due = new Date('2025-01-02T00:00:00Z')
     await repo.saveLineState(line.id, state)
 
@@ -218,13 +238,21 @@ describe('Repository — archive', () => {
     const sched = new LineScheduler()
     const t0 = new Date('2025-01-01T00:00:00Z')
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 86400_000),
+    )
     state.due = new Date('2025-01-02T00:00:00Z')
     await repo.saveLineState(line.id, state)
 
     const now = new Date('2025-01-05T00:00:00Z')
-    expect((await repo.getDueLines(chapter.id, now)).map((r) => r.line_id)).toContain(line.id)
-    expect((await repo.getDueLines(null, now)).map((r) => r.line_id)).toContain(line.id)
+    expect(
+      (await repo.getDueLines(chapter.id, now)).map((r) => r.line_id),
+    ).toContain(line.id)
+    expect((await repo.getDueLines(null, now)).map((r) => r.line_id)).toContain(
+      line.id,
+    )
 
     await repo.archiveLine(line.id)
 
@@ -243,7 +271,11 @@ describe('Repository — archive', () => {
     // Learned + due + mastered state on the first line.
     const sched = new LineScheduler()
     let state = sched.initial(new Date('2025-01-01T00:00:00Z'))
-    state = sched.next(state, 'pass_all_first', new Date('2025-01-02T00:00:00Z'))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date('2025-01-02T00:00:00Z'),
+    )
     state.due = new Date('2025-01-03T00:00:00Z')
     state.stability = 30
     state.consecutive_correct = 3
@@ -274,7 +306,11 @@ describe('Repository — archive', () => {
 
     const sched = new LineScheduler()
     let state = sched.initial(new Date('2025-01-01T00:00:00Z'))
-    state = sched.next(state, 'pass_all_first', new Date('2025-01-02T00:00:00Z'))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date('2025-01-02T00:00:00Z'),
+    )
     await repo.saveLineState(line.id, state)
 
     const before = await repo.getLineStatesForChapter(chapter.id)
@@ -292,7 +328,11 @@ describe('Repository — archive', () => {
     const sched = new LineScheduler()
     const t0 = new Date('2025-01-01T00:00:00Z')
     let state = sched.initial(t0)
-    state = sched.next(state, 'pass_all_first', new Date(t0.getTime() + 86400_000))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date(t0.getTime() + 86400_000),
+    )
     await repo.saveLineState(line.id, state)
     const before = await repo.getLineState(line.id)
     expect(before).not.toBeNull()

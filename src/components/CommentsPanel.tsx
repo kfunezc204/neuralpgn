@@ -145,7 +145,7 @@ export function CommentsPanel({
           line,
           chapter: { name: chapter.name, lineCount: chapterLineCount },
         })
-      : chapter?.name ?? ''
+      : (chapter?.name ?? '')
 
   // Per-line intro (the game comment of the exercise/lesson) wins over the
   // chapter-level intro, which only carries the first game's comment.
@@ -177,46 +177,46 @@ export function CommentsPanel({
         </header>
 
         <div className="px-4 py-3">
-        {introComment && (
-          <section className="mb-4">
-            <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-              Sobre esta variante
-            </h3>
-            <CommentBlock text={introComment} />
-          </section>
-        )}
-
-        {mode === 'quiz' && initialFen && (
-          <section className="mb-4 rounded-md border border-accent/30 bg-accent-soft p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-accent">
-              Quiz
-            </div>
-            <p className="mt-1 text-sm font-medium text-ink">
-              {quizSideAnnouncement(initialFen)}
-            </p>
-          </section>
-        )}
-
-        <section>
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-            Historial
-          </h3>
-          {history.length === 0 ? (
-            <p className="text-xs text-ink-faint">
-              Aún no hay jugadas registradas.
-            </p>
-          ) : (
-            <HistoryFlow
-              tokens={formatHistoryAsPgnFlow({
-                history,
-                initialFen,
-                currentReplayIndex:
-                  mode === 'replay' ? currentReplayIndex : null,
-              })}
-              onJump={mode === 'replay' ? onJumpToReplay : undefined}
-            />
+          {introComment && (
+            <section className="mb-4">
+              <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                Sobre esta variante
+              </h3>
+              <CommentBlock text={introComment} />
+            </section>
           )}
-        </section>
+
+          {mode === 'quiz' && initialFen && (
+            <section className="mb-4 rounded-md border border-accent/30 bg-accent-soft p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+                Quiz
+              </div>
+              <p className="mt-1 text-sm font-medium text-ink">
+                {quizSideAnnouncement(initialFen)}
+              </p>
+            </section>
+          )}
+
+          <section>
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+              Historial
+            </h3>
+            {history.length === 0 ? (
+              <p className="text-xs text-ink-faint">
+                Aún no hay jugadas registradas.
+              </p>
+            ) : (
+              <HistoryFlow
+                tokens={formatHistoryAsPgnFlow({
+                  history,
+                  initialFen,
+                  currentReplayIndex:
+                    mode === 'replay' ? currentReplayIndex : null,
+                })}
+                onJump={mode === 'replay' ? onJumpToReplay : undefined}
+              />
+            )}
+          </section>
         </div>
       </div>
     </aside>

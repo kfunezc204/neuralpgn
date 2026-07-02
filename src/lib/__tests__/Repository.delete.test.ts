@@ -35,7 +35,11 @@ describe('Repository — deleteLineHard', () => {
 
     const sched = new LineScheduler()
     let state = sched.initial(new Date('2025-01-01T00:00:00Z'))
-    state = sched.next(state, 'pass_all_first', new Date('2025-01-02T00:00:00Z'))
+    state = sched.next(
+      state,
+      'pass_all_first',
+      new Date('2025-01-02T00:00:00Z'),
+    )
     await repo.saveLineState(line.id, state)
     await repo.logReviewEvent({
       line_id: line.id,

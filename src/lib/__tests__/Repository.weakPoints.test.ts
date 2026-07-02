@@ -60,7 +60,10 @@ describe('Repository — move misses', () => {
   it('scopes misses by pgn and by profile', async () => {
     const { repo, pgnId, line, cards } = await seed()
     const otherResult = new PgnIngestor().ingest(LINEAR_PGN)
-    const otherPgnId = await repo.savePgn({ name: 'PGN B', result: otherResult })
+    const otherPgnId = await repo.savePgn({
+      name: 'PGN B',
+      result: otherResult,
+    })
 
     await repo.recordMoveMisses([
       {

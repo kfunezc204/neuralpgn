@@ -47,9 +47,7 @@ describe('Repository — getPgnCounters.nextDueAt', () => {
 
     const counters = await repo.getPgnCounters(pgnId)
 
-    const earliest = new Date(
-      Math.min(s0.due.getTime(), s1.due.getTime()),
-    )
+    const earliest = new Date(Math.min(s0.due.getTime(), s1.due.getTime()))
     expect(counters.nextDueAt).not.toBeNull()
     expect(counters.nextDueAt!.getTime()).toBe(earliest.getTime())
   })
