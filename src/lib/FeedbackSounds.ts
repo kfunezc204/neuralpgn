@@ -17,6 +17,12 @@ export function isSoundEnabled(): boolean {
 function audioContext(): AudioContext | null {
   if (typeof AudioContext === 'undefined') return null
   if (!ctx) ctx = new AudioContext()
+  // WebView2 (production build) applies the autoplay policy more strictly
+  // than a dev browser tab: the context can sit in 'suspended' even when
+  // created inside a user-gesture call stack. Every play call originates
+  // from a pointer event (a board move), so resuming here is allowed;
+  // the scheduled tones then start as soon as the clock unfreezes.
+  if (ctx.state === 'suspended') void ctx.resume()
   return ctx
 }
 

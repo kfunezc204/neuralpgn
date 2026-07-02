@@ -26,7 +26,7 @@ interface StoreFile {
 const EMPTY: StoreFile = { active_profile_id: null, profiles: [] }
 
 function randomId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
+  return crypto.randomUUID()
 }
 
 export class ProfileStore {

@@ -190,6 +190,20 @@ interface LineStateRowRaw {
 export class Repository {
   constructor(private readonly sql: SqlAdapter) {}
 
+  /**
+   * ALTER TABLE ADD COLUMN with the duplicate-column error as the expected
+   * no-op (SQLite has no ADD COLUMN IF NOT EXISTS). Any other failure — disk
+   * full, locked DB — must surface, not leave a silently incomplete schema.
+   */
+  private async addColumnIfMissing(alterSql: string): Promise<void> {
+    try {
+      await this.sql.execute(alterSql)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (!/duplicate column/i.test(message)) throw err
+    }
+  }
+
   async migrate(): Promise<void> {
     // Schema versioning. Pre-launch nuke: any DB without schema_meta or with
     // version < SCHEMA_VERSION is dropped and rebuilt from scratch (per the
@@ -237,22 +251,13 @@ export class Repository {
       )
     `)
     // Additive columns (post-v4, no data nuke): Lichess study origin and the
-    // challenge-course flag. Same duplicate-column-error-as-no-op pattern as
-    // learning_steps below.
-    try {
-      await this.sql.execute(
-        `ALTER TABLE pgns ADD COLUMN lichess_study_id TEXT`,
-      )
-    } catch {
-      // column already exists
-    }
-    try {
-      await this.sql.execute(
-        `ALTER TABLE pgns ADD COLUMN is_challenge INTEGER NOT NULL DEFAULT 0`,
-      )
-    } catch {
-      // column already exists
-    }
+    // challenge-course flag.
+    await this.addColumnIfMissing(
+      `ALTER TABLE pgns ADD COLUMN lichess_study_id TEXT`,
+    )
+    await this.addColumnIfMissing(
+      `ALTER TABLE pgns ADD COLUMN is_challenge INTEGER NOT NULL DEFAULT 0`,
+    )
     await this.sql.execute(`
       CREATE TABLE IF NOT EXISTS chapters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -274,12 +279,8 @@ export class Repository {
       )
     `)
     // Additive column (post-v4, no data nuke): author-drawn board shapes from
-    // %cal/%csl. Same duplicate-column-error-as-no-op pattern as below.
-    try {
-      await this.sql.execute(`ALTER TABLE cards ADD COLUMN shapes TEXT`)
-    } catch {
-      // column already exists
-    }
+    // %cal/%csl.
+    await this.addColumnIfMissing(`ALTER TABLE cards ADD COLUMN shapes TEXT`)
     await this.sql.execute(
       `CREATE INDEX IF NOT EXISTS idx_cards_chapter ON cards(chapter_id)`,
     )
@@ -314,15 +315,9 @@ export class Repository {
       )
     `)
     // Additive column (post-v4, no data nuke): FSRS learning-step index.
-    // SQLite has no ADD COLUMN IF NOT EXISTS, so the duplicate-column error on
-    // an already-migrated DB is the expected no-op.
-    try {
-      await this.sql.execute(
-        `ALTER TABLE line_states ADD COLUMN learning_steps INTEGER NOT NULL DEFAULT 0`,
-      )
-    } catch {
-      // column already exists
-    }
+    await this.addColumnIfMissing(
+      `ALTER TABLE line_states ADD COLUMN learning_steps INTEGER NOT NULL DEFAULT 0`,
+    )
     await this.sql.execute(`
       CREATE TABLE IF NOT EXISTS review_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -335,15 +330,10 @@ export class Repository {
         duration_ms INTEGER
       )
     `)
-    // Additive column (post-v4, no data nuke): quiz wall time. Same
-    // duplicate-column-error-as-no-op pattern as the others.
-    try {
-      await this.sql.execute(
-        `ALTER TABLE review_events ADD COLUMN duration_ms INTEGER`,
-      )
-    } catch {
-      // column already exists
-    }
+    // Additive column (post-v4, no data nuke): quiz wall time.
+    await this.addColumnIfMissing(
+      `ALTER TABLE review_events ADD COLUMN duration_ms INTEGER`,
+    )
     await this.sql.execute(
       `CREATE INDEX IF NOT EXISTS idx_review_events_line ON review_events(line_id, profile_id, ts)`,
     )

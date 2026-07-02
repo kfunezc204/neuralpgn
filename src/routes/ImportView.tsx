@@ -164,7 +164,6 @@ export function ImportView() {
     if (!preview) return
     setSaving(true)
     setSaveError(null)
-    const t0 = performance.now()
     try {
       // Re-ingest with the user-chosen sides. user_side drives line/card
       // extraction inside the ingestor (which moves become quizzed steps), so
@@ -181,7 +180,6 @@ export function ImportView() {
         is_challenge: isChallenge,
         result,
       })
-      console.log(`savePgn done in ${(performance.now() - t0).toFixed(0)}ms`)
       // Land the user directly on their first variant in Aprender — the
       // course-root auto-pick resolves the line and forwards the banner.
       const lineCount = result.chapters.reduce(
