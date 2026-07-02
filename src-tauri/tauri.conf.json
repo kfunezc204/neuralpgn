@@ -19,7 +19,9 @@
         "minHeight": 600
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://lichess.org; object-src 'none'; base-uri 'self'"
+    }
   },
   "bundle": {
     "active": true,

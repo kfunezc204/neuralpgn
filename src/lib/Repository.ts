@@ -409,6 +409,70 @@ export class Repository {
     )
   }
 
+  // Multi-row insert batching. Each execute() is a full IPC round-trip
+  // through Tauri, so importing a large PGN one row at a time is dominated by
+  // per-call overhead. Chunk size keeps the bind-parameter count comfortably
+  // under SQLite's historical 999-variable limit.
+  private static readonly MAX_BATCH_PARAMS = 400
+
+  private batchChunks(columnCount: number, rows: unknown[][]): unknown[][][] {
+    const perChunk = Math.max(
+      1,
+      Math.floor(Repository.MAX_BATCH_PARAMS / columnCount),
+    )
+    const chunks: unknown[][][] = []
+    for (let i = 0; i < rows.length; i += perChunk) {
+      chunks.push(rows.slice(i, i + perChunk))
+    }
+    return chunks
+  }
+
+  private insertSql(
+    table: string,
+    columns: string[],
+    rowCount: number,
+  ): string {
+    const row = `(${columns.map(() => '?').join(', ')})`
+    const values = Array.from({ length: rowCount }, () => row).join(', ')
+    return `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${values}`
+  }
+
+  private async batchInsert(
+    table: string,
+    columns: string[],
+    rows: unknown[][],
+  ): Promise<void> {
+    for (const chunk of this.batchChunks(columns.length, rows)) {
+      await this.sql.execute(
+        this.insertSql(table, columns, chunk.length),
+        chunk.flat(),
+      )
+    }
+  }
+
+  /**
+   * Batched insert that reports the generated ids, in input-row order.
+   * RETURNING gives the ids back without a second query; within a single
+   * INSERT statement SQLite assigns strictly ascending rowids, so sorting
+   * each chunk's ids recovers the VALUES order (RETURNING output order is
+   * formally unspecified).
+   */
+  private async batchInsertReturningIds(
+    table: string,
+    columns: string[],
+    rows: unknown[][],
+  ): Promise<number[]> {
+    const ids: number[] = []
+    for (const chunk of this.batchChunks(columns.length, rows)) {
+      const returned = await this.sql.select<{ id: number }>(
+        `${this.insertSql(table, columns, chunk.length)} RETURNING id`,
+        chunk.flat(),
+      )
+      ids.push(...returned.map((r) => r.id).sort((a, b) => a - b))
+    }
+    return ids
+  }
+
   async savePgn(input: SavePgnInput): Promise<number> {
     const { lastInsertId } = await this.sql.execute(
       `INSERT INTO pgns (name, source_path, author, lichess_study_id, is_challenge) VALUES (?, ?, ?, ?, ?)`,
@@ -422,37 +486,48 @@ export class Repository {
     )
     const pgnId = lastInsertId!
 
-    const chapterIdMap = new Map<string, number>()
-    for (const chapter of input.result.chapters) {
-      const { lastInsertId: chapterDbId } = await this.sql.execute(
-        `INSERT INTO chapters (pgn_id, name, user_side, intro_comment) VALUES (?, ?, ?, ?)`,
-        [pgnId, chapter.name, chapter.user_side, chapter.intro_comment ?? null],
-      )
-      chapterIdMap.set(chapter.id, chapterDbId!)
-    }
+    const chapterIds = await this.batchInsertReturningIds(
+      'chapters',
+      ['pgn_id', 'name', 'user_side', 'intro_comment'],
+      input.result.chapters.map((c) => [
+        pgnId,
+        c.name,
+        c.user_side,
+        c.intro_comment ?? null,
+      ]),
+    )
+    const chapterIdMap = new Map<string, number>(
+      input.result.chapters.map((c, i) => [c.id, chapterIds[i]]),
+    )
 
-    const cardIdMap = new Map<string, number>()
-    for (const card of input.result.cards) {
+    // Validate every referenced chapter/card BEFORE any card or line insert
+    // runs, so a malformed ingest result rejects without partial rows (there
+    // is no cross-statement transaction to roll back under plugin-sql).
+    const cardRows = input.result.cards.map((card) => {
       const chapterDbId = chapterIdMap.get(card.chapter_id)
       if (chapterDbId === undefined) {
         throw new Error(
           `unknown chapter ${card.chapter_id} for card ${card.id}`,
         )
       }
-      const { lastInsertId: cardDbId } = await this.sql.execute(
-        `INSERT INTO cards (chapter_id, fen_canonical, refutations, comment, shapes) VALUES (?, ?, ?, ?, ?)`,
-        [
-          chapterDbId,
-          card.fen_canonical,
-          JSON.stringify(card.refutations),
-          card.comment ?? null,
-          card.shapes ? JSON.stringify(card.shapes) : null,
-        ],
-      )
-      cardIdMap.set(card.id, cardDbId!)
-    }
+      return [
+        chapterDbId,
+        card.fen_canonical,
+        JSON.stringify(card.refutations),
+        card.comment ?? null,
+        card.shapes ? JSON.stringify(card.shapes) : null,
+      ]
+    })
+    const cardIds = await this.batchInsertReturningIds(
+      'cards',
+      ['chapter_id', 'fen_canonical', 'refutations', 'comment', 'shapes'],
+      cardRows,
+    )
+    const cardIdMap = new Map<string, number>(
+      input.result.cards.map((c, i) => [c.id, cardIds[i]]),
+    )
 
-    for (const line of input.result.lines) {
+    const lineRows = input.result.lines.map((line) => {
       const chapterDbId = chapterIdMap.get(line.chapter_id)
       if (chapterDbId === undefined) {
         throw new Error(
@@ -466,16 +541,18 @@ export class Repository {
       if (dbSteps.some((s) => s.card_id === undefined)) {
         throw new Error(`line ${line.id} references unknown card`)
       }
-      await this.sql.execute(
-        `INSERT INTO lines (chapter_id, dfs_index, steps, intro_comment) VALUES (?, ?, ?, ?)`,
-        [
-          chapterDbId,
-          line.dfs_index,
-          JSON.stringify(dbSteps),
-          line.intro_comment ?? null,
-        ],
-      )
-    }
+      return [
+        chapterDbId,
+        line.dfs_index,
+        JSON.stringify(dbSteps),
+        line.intro_comment ?? null,
+      ]
+    })
+    await this.batchInsert(
+      'lines',
+      ['chapter_id', 'dfs_index', 'steps', 'intro_comment'],
+      lineRows,
+    )
 
     return pgnId
   }
@@ -598,50 +675,70 @@ export class Repository {
       await this.sql.execute(`DELETE FROM ${t}`)
     }
 
-    for (const row of snap.pgns) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO pgns (id, name, source_path, author, lichess_study_id, is_challenge, imported_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
+    const rec = (row: unknown) => row as Record<string, unknown>
+    await this.batchInsert(
+      'pgns',
+      [
+        'id',
+        'name',
+        'source_path',
+        'author',
+        'lichess_study_id',
+        'is_challenge',
+        'imported_at',
+      ],
+      snap.pgns.map(rec).map((r) => [
+        r.id,
+        r.name,
+        r.source_path ?? null,
+        r.author ?? null,
+        // Backups predating the Lichess import restore with no study origin.
+        r.lichess_study_id ?? null,
+        // Backups predating challenge courses restore as study courses.
+        r.is_challenge ?? 0,
+        r.imported_at,
+      ]),
+    )
+    await this.batchInsert(
+      'chapters',
+      ['id', 'pgn_id', 'name', 'user_side', 'intro_comment'],
+      snap.chapters
+        .map(rec)
+        .map((r) => [
           r.id,
+          r.pgn_id,
           r.name,
-          r.source_path ?? null,
-          r.author ?? null,
-          // Backups predating the Lichess import restore with no study origin.
-          r.lichess_study_id ?? null,
-          // Backups predating challenge courses restore as study courses.
-          r.is_challenge ?? 0,
-          r.imported_at,
-        ],
-      )
-    }
-    for (const row of snap.chapters) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO chapters (id, pgn_id, name, user_side, intro_comment) VALUES (?, ?, ?, ?, ?)`,
-        [r.id, r.pgn_id, r.name, r.user_side, r.intro_comment ?? null],
-      )
-    }
-    for (const row of snap.cards) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO cards (id, chapter_id, fen_canonical, refutations, comment, shapes) VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          r.id,
-          r.chapter_id,
-          r.fen_canonical,
-          r.refutations,
-          r.comment ?? null,
-          // Backups predating the shapes column restore without annotations.
-          r.shapes ?? null,
-        ],
-      )
-    }
-    for (const row of snap.lines) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO lines (id, chapter_id, dfs_index, steps, intro_comment, is_archived, archived_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
+          r.user_side,
+          r.intro_comment ?? null,
+        ]),
+    )
+    await this.batchInsert(
+      'cards',
+      ['id', 'chapter_id', 'fen_canonical', 'refutations', 'comment', 'shapes'],
+      snap.cards.map(rec).map((r) => [
+        r.id,
+        r.chapter_id,
+        r.fen_canonical,
+        r.refutations,
+        r.comment ?? null,
+        // Backups predating the shapes column restore without annotations.
+        r.shapes ?? null,
+      ]),
+    )
+    await this.batchInsert(
+      'lines',
+      [
+        'id',
+        'chapter_id',
+        'dfs_index',
+        'steps',
+        'intro_comment',
+        'is_archived',
+        'archived_at',
+      ],
+      snap.lines
+        .map(rec)
+        .map((r) => [
           r.id,
           r.chapter_id,
           r.dfs_index,
@@ -649,54 +746,77 @@ export class Repository {
           r.intro_comment ?? null,
           (r.is_archived as number | undefined) ?? 0,
           (r.archived_at as string | null | undefined) ?? null,
-        ],
-      )
-    }
-    for (const row of snap.line_states) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO line_states (line_id, profile_id, stability, difficulty, due, state, reps, lapses, consecutive_correct, learning_steps, last_review)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          r.line_id,
-          r.profile_id,
-          r.stability,
-          r.difficulty,
-          r.due,
-          r.state,
-          r.reps,
-          r.lapses,
-          r.consecutive_correct,
-          // Backups predating the learning-steps column restore at step 0.
-          (r.learning_steps as number | undefined) ?? 0,
-          r.last_review ?? null,
-        ],
-      )
-    }
-    for (const row of snap.review_events) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO review_events (id, line_id, profile_id, ts, outcome, retries_used_count, rating, duration_ms)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          r.id,
-          r.line_id,
-          r.profile_id,
-          r.ts,
-          r.outcome,
-          r.retries_used_count,
-          r.rating,
-          // Backups predating the duration column restore untimed.
-          r.duration_ms ?? null,
-        ],
-      )
-    }
-    for (const row of snap.move_misses ?? []) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO move_misses (id, card_id, line_id, profile_id, ts, kind, played_san, expected_san)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+        ]),
+    )
+    await this.batchInsert(
+      'line_states',
+      [
+        'line_id',
+        'profile_id',
+        'stability',
+        'difficulty',
+        'due',
+        'state',
+        'reps',
+        'lapses',
+        'consecutive_correct',
+        'learning_steps',
+        'last_review',
+      ],
+      snap.line_states.map(rec).map((r) => [
+        r.line_id,
+        r.profile_id,
+        r.stability,
+        r.difficulty,
+        r.due,
+        r.state,
+        r.reps,
+        r.lapses,
+        r.consecutive_correct,
+        // Backups predating the learning-steps column restore at step 0.
+        (r.learning_steps as number | undefined) ?? 0,
+        r.last_review ?? null,
+      ]),
+    )
+    await this.batchInsert(
+      'review_events',
+      [
+        'id',
+        'line_id',
+        'profile_id',
+        'ts',
+        'outcome',
+        'retries_used_count',
+        'rating',
+        'duration_ms',
+      ],
+      snap.review_events.map(rec).map((r) => [
+        r.id,
+        r.line_id,
+        r.profile_id,
+        r.ts,
+        r.outcome,
+        r.retries_used_count,
+        r.rating,
+        // Backups predating the duration column restore untimed.
+        r.duration_ms ?? null,
+      ]),
+    )
+    await this.batchInsert(
+      'move_misses',
+      [
+        'id',
+        'card_id',
+        'line_id',
+        'profile_id',
+        'ts',
+        'kind',
+        'played_san',
+        'expected_san',
+      ],
+      (snap.move_misses ?? [])
+        .map(rec)
+        .map((r) => [
           r.id,
           r.card_id,
           r.line_id,
@@ -705,17 +825,15 @@ export class Repository {
           r.kind,
           r.played_san,
           r.expected_san ?? null,
-        ],
-      )
-    }
-    for (const row of snap.puzzle_attempts ?? []) {
-      const r = row as Record<string, unknown>
-      await this.sql.execute(
-        `INSERT INTO puzzle_attempts (id, card_id, profile_id, ts, correct)
-         VALUES (?, ?, ?, ?, ?)`,
-        [r.id, r.card_id, r.profile_id, r.ts, r.correct],
-      )
-    }
+        ]),
+    )
+    await this.batchInsert(
+      'puzzle_attempts',
+      ['id', 'card_id', 'profile_id', 'ts', 'correct'],
+      (snap.puzzle_attempts ?? [])
+        .map(rec)
+        .map((r) => [r.id, r.card_id, r.profile_id, r.ts, r.correct]),
+    )
   }
 
   // Row → domain mappers. The steps-JSON decode and the TEXT→Date decode are
@@ -1010,21 +1128,27 @@ export class Repository {
   }
 
   async recordMoveMisses(misses: NewMoveMiss[]): Promise<void> {
-    for (const m of misses) {
-      await this.sql.execute(
-        `INSERT INTO move_misses (card_id, line_id, profile_id, ts, kind, played_san, expected_san)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          m.card_id,
-          m.line_id,
-          m.profile_id ?? DEFAULT_PROFILE,
-          m.ts.toISOString(),
-          m.kind,
-          m.played_san,
-          m.expected_san,
-        ],
-      )
-    }
+    await this.batchInsert(
+      'move_misses',
+      [
+        'card_id',
+        'line_id',
+        'profile_id',
+        'ts',
+        'kind',
+        'played_san',
+        'expected_san',
+      ],
+      misses.map((m) => [
+        m.card_id,
+        m.line_id,
+        m.profile_id ?? DEFAULT_PROFILE,
+        m.ts.toISOString(),
+        m.kind,
+        m.played_san,
+        m.expected_san,
+      ]),
+    )
   }
 
   async getMoveMissesForPgn(

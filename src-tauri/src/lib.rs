@@ -1,10 +1,26 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Component, PathBuf};
 use tauri::Manager;
 
+/// The fs_* commands only ever operate on files the frontend derives from
+/// app_data_dir (profiles.json, per-profile DBs, backups). Resolve the
+/// requested path against that base and reject anything outside it, so a
+/// compromised webview can't read or delete arbitrary user files.
+fn scoped_path(app: &tauri::AppHandle, requested: &str) -> Result<PathBuf, String> {
+    let base = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let p = PathBuf::from(requested);
+    let escapes = p
+        .components()
+        .any(|c| matches!(c, Component::ParentDir | Component::CurDir));
+    if escapes || !p.starts_with(&base) {
+        return Err(format!("path outside app data dir: {requested}"));
+    }
+    Ok(p)
+}
+
 #[tauri::command]
-fn fs_read_text(path: String) -> Result<Option<String>, String> {
-    let p = PathBuf::from(&path);
+fn fs_read_text(app: tauri::AppHandle, path: String) -> Result<Option<String>, String> {
+    let p = scoped_path(&app, &path)?;
     if !p.exists() {
         return Ok(None);
     }
@@ -12,8 +28,8 @@ fn fs_read_text(path: String) -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
-fn fs_write_text(path: String, content: String) -> Result<(), String> {
-    let p = PathBuf::from(&path);
+fn fs_write_text(app: tauri::AppHandle, path: String, content: String) -> Result<(), String> {
+    let p = scoped_path(&app, &path)?;
     if let Some(parent) = p.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
@@ -21,8 +37,8 @@ fn fs_write_text(path: String, content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn fs_remove(path: String) -> Result<(), String> {
-    let p = PathBuf::from(&path);
+fn fs_remove(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    let p = scoped_path(&app, &path)?;
     if !p.exists() {
         return Ok(());
     }
@@ -30,8 +46,8 @@ fn fs_remove(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn fs_list_dir(dir: String) -> Result<Vec<String>, String> {
-    let p = PathBuf::from(&dir);
+fn fs_list_dir(app: tauri::AppHandle, dir: String) -> Result<Vec<String>, String> {
+    let p = scoped_path(&app, &dir)?;
     if !p.exists() {
         return Ok(Vec::new());
     }
