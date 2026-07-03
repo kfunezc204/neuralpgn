@@ -50,3 +50,4 @@ image copy*.png
 
 # Local verification scratch (driver + screenshots)
 /.verify/
+Clipboard*.png
