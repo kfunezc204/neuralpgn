@@ -31,10 +31,10 @@ Most opening trainers are web services: your repertoire lives on someone else's 
 
 - **PGN import** — drag & drop any PGN file; games with variations are split into individual trainable lines.
 - **Lichess study import** — import a study (or a single chapter) directly from its URL.
-- **Learn / Review workflow** — new lines are *taught* first (moves shown with comments and board arrows from the PGN), then *quizzed* from memory. Failed moves show the refutation and its continuation.
+- **Learn / Review workflow** — new lines are _taught_ first (moves shown with comments and board arrows from the PGN), then _quizzed_ from memory. Failed moves show the refutation and its continuation.
 - **FSRS spaced repetition** — each line is graded on how you performed (clean pass / pass with retries / fail) and rescheduled accordingly.
 - **Review All** — one session that walks every due line across your whole library.
-- **Challenge courses** — tactics-style packs where the first attempt *is* the exercise: new lines quiz you blind instead of teaching first.
+- **Challenge courses** — tactics-style packs where the first attempt _is_ the exercise: new lines quiz you blind instead of teaching first.
 - **Weak points** — moves you keep missing are collected into a dedicated drill deck.
 - **Daily limits** — cap how many new lines enter rotation per day so the review queue stays sane.
 - **Profiles** — separate repertoires, stats, and schedules per player.
@@ -46,13 +46,13 @@ Most opening trainers are web services: your repertoire lives on someone else's 
 
 Grab the installer for the [latest release](https://github.com/kfunezc204/neuralpgn/releases/latest).
 
-> **Windows SmartScreen note:** the binaries are not signed with a paid code-signing certificate, so Windows may show a "protected your PC" warning on first run. Click *More info → Run anyway*. Updates themselves are cryptographically signed and verified by the app before installing.
+> **Windows SmartScreen note:** the binaries are not signed with a paid code-signing certificate, so Windows may show a "protected your PC" warning on first run. Click _More info → Run anyway_. Updates themselves are cryptographically signed and verified by the app before installing.
 
 The app talks to the network for exactly two things: `lichess.org` when you import a study, and GitHub Releases when checking for updates. Everything else is local.
 
 ## How training works
 
-1. **Import** a PGN or Lichess study. Each variation becomes a *line*.
+1. **Import** a PGN or Lichess study. Each variation becomes a _line_.
 2. **Learn** — the app plays through a new line with you, showing comments and arrows from the source PGN.
 3. **Review** — when a line comes due, you play your side's moves from memory. Wrong move? You get a retry, then the correct move with its refutation continuation.
 4. **Repeat** — your result (perfect / with retries / failed) feeds FSRS, which schedules the next review: hard lines come back in hours, mastered lines in months.
