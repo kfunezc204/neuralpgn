@@ -23,9 +23,18 @@
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://lichess.org; object-src 'none'; base-uri 'self'"
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIxODVDOTRCNjBFQkIyNTgKUldSWXN1dGdTOG1GSVFlb3dRZEplRlpVTlJER2lwTlpzTlZkMW9oajhkQk9iWjFRa25aZTFDZGkK",
+      "endpoints": [
+        "https://github.com/kfunezc204/neuralpgn/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

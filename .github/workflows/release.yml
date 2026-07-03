@@ -1,0 +1,36 @@
+name: Release
+
+# Tag a version (git tag v0.2.0 && git push origin v0.2.0) to build the
+# Windows installers, sign the updater artifacts and publish a GitHub Release
+# with latest.json — the endpoint the in-app updater polls.
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'NeuralPGN ${{ github.ref_name }}'
+          releaseBody: 'Instaladores de Windows. La app se actualiza sola desde versiones anteriores.'
+          releaseDraft: false
+          prerelease: false

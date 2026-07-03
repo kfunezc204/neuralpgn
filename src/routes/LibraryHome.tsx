@@ -13,6 +13,7 @@ import { EmptyState } from '../components/ui/EmptyState.tsx'
 import { formatNextReview } from '../lib/NextReviewFormatter.ts'
 import { summarizeDay } from '../lib/DailySummary.ts'
 import { fetchActiveWeakPointCount } from '../lib/WeakPointDeck.ts'
+import { checkForUpdate, type AvailableUpdate } from '../lib/UpdateChecker.ts'
 import type { DailySummaryResult } from '../lib/DailySummary.ts'
 import type { PgnCounters, PgnSummary } from '../lib/Repository.ts'
 
@@ -87,6 +88,30 @@ export function LibraryHome() {
     return () => clearInterval(id)
   }, [refresh])
 
+  // One update check per library mount; silent unless a new version exists.
+  const [update, setUpdate] = useState<AvailableUpdate | null>(null)
+  const [installing, setInstalling] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    void checkForUpdate().then((u) => {
+      if (!cancelled && u) setUpdate(u)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function handleInstallUpdate() {
+    if (!update || installing) return
+    setInstalling(true)
+    try {
+      await update.install()
+    } catch {
+      // Download/install failed (offline mid-download, etc.): allow retry.
+      setInstalling(false)
+    }
+  }
+
   const [pendingDelete, setPendingDelete] = useState<{
     id: number
     name: string
@@ -134,6 +159,21 @@ export function LibraryHome() {
           navigate('/import', { state: { droppedFile: { name, text } } })
         }
       />
+      {update && (
+        <div className="mb-4 flex items-center justify-between rounded-md border border-accent/40 bg-accent-soft px-3 py-2 text-sm">
+          <span className="text-ink">
+            Nueva versión disponible: <strong>v{update.version}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleInstallUpdate()}
+            disabled={installing}
+            className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover disabled:opacity-50"
+          >
+            {installing ? 'Descargando…' : 'Actualizar y reiniciar'}
+          </button>
+        </div>
+      )}
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">NeuralPGN</h1>
