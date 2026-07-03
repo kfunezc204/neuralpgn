@@ -62,7 +62,7 @@ export function CourseCard({
       <div className="flex items-start gap-4">
         <Link
           to={`/pgn/${pgn.id}`}
-          aria-label={`Abrir ${pgn.name}`}
+          aria-label={`Open ${pgn.name}`}
           className="shrink-0 transition-transform duration-200 ease-out hover:scale-[1.04]"
         >
           <CourseThumbnail />
@@ -81,29 +81,29 @@ export function CourseCard({
                 {pgn.is_challenge && (
                   <span
                     className="shrink-0 rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-xs text-accent"
-                    title="Curso de reto: las posiciones nuevas se preguntan a ciegas"
+                    title="Challenge course: new positions are quizzed blind"
                   >
-                    ⚡ Reto
+                    ⚡ Challenge
                   </span>
                 )}
               </div>
               {pgn.author && (
                 <p className="truncate text-xs text-ink-faint">
-                  por {pgn.author}
+                  by {pgn.author}
                 </p>
               )}
             </div>
             <KebabMenu
-              ariaLabel={`Acciones de ${pgn.name}`}
+              ariaLabel={`Actions for ${pgn.name}`}
               items={[
-                { label: 'Renombrar curso', onClick: onRename },
+                { label: 'Rename course', onClick: onRename },
                 {
                   label: pgn.is_challenge
-                    ? 'Desactivar modo reto'
-                    : 'Activar modo reto',
+                    ? 'Disable challenge mode'
+                    : 'Enable challenge mode',
                   onClick: onToggleChallenge,
                 },
-                { label: 'Borrar curso', onClick: onDelete, danger: true },
+                { label: 'Delete course', onClick: onDelete, danger: true },
               ]}
             />
           </div>
@@ -111,16 +111,16 @@ export function CourseCard({
           <div className="mt-3">
             <div className="flex items-center justify-between text-xs text-ink-muted">
               <span className="font-mono tabular-nums">
-                {counters.learned} aprendidas de {counters.total} variantes
+                {counters.learned} of {counters.total} lines learned
               </span>
               {counters.learnedThisWeek > 0 && (
                 <span className="font-mono tabular-nums text-accent">
-                  +{counters.learnedThisWeek} esta semana
+                  +{counters.learnedThisWeek} this week
                 </span>
               )}
               {counters.mastered > 0 && (
                 <span className="font-mono tabular-nums text-ok">
-                  ✓ {counters.mastered} dominadas
+                  ✓ {counters.mastered} mastered
                 </span>
               )}
             </div>
@@ -140,43 +140,43 @@ export function CourseCard({
             {weakPoints > 0 && (
               <Link
                 to={`/pgn/${pgn.id}/puzzles`}
-                aria-label={`Entrenar ${weakPoints} puntos débiles de ${pgn.name}`}
-                title="Puzzles de las posiciones donde más fallas — no escribe en SRS"
+                aria-label={`Train ${weakPoints} weak points of ${pgn.name}`}
+                title="Puzzles from the positions you miss most — never writes to SRS"
                 className="mr-auto text-xs text-ink-muted transition-colors duration-150 hover:text-accent"
               >
                 🎯{' '}
                 {weakPoints === 1
-                  ? '1 punto débil'
-                  : `${weakPoints} puntos débiles`}{' '}
-                → entrenar
+                  ? '1 weak point'
+                  : `${weakPoints} weak points`}{' '}
+                → train
               </Link>
             )}
             {reviewDisabled ? (
               counters.nextDueAt ? (
                 <span
-                  aria-label={`Próximo repaso ${formatNextReview(counters.nextDueAt, new Date())}`}
+                  aria-label={`Next review ${formatNextReview(counters.nextDueAt, new Date())}`}
                   className="text-xs text-ink-faint"
                 >
-                  Al día ✓ · próximo repaso{' '}
+                  Up to date ✓ · next review{' '}
                   {formatNextReview(counters.nextDueAt, new Date())}
                 </span>
               ) : (
                 <span
                   aria-disabled="true"
-                  aria-label="Repasar — sin variantes pendientes"
-                  title="No hay variantes due"
+                  aria-label="Review — no lines due"
+                  title="No lines due"
                   className={buttonClasses({ disabled: true })}
                 >
-                  Repasar
+                  Review
                 </span>
               )
             ) : (
               <Link
                 to={`/pgn/${pgn.id}?tab=review`}
-                aria-label={`Repasar ${pgn.name} (${counters.due} variantes due)`}
+                aria-label={`Review ${pgn.name} (${counters.due} lines due)`}
                 className={buttonClasses({ variant: 'primary' })}
               >
-                Repasar
+                Review
                 <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-contrast/15 px-1.5 font-mono text-xs font-semibold tabular-nums">
                   {counters.due}
                 </span>
@@ -187,22 +187,20 @@ export function CourseCard({
               <span
                 aria-disabled="true"
                 aria-label={
-                  allLearned
-                    ? 'Aprender — completado'
-                    : 'Aprender — sin contenido'
+                  allLearned ? 'Learn — completed' : 'Learn — no content'
                 }
-                title={allLearned ? 'Todo aprendido' : 'Sin contenido'}
+                title={allLearned ? 'Everything learned' : 'No content'}
                 className={buttonClasses({ disabled: true })}
               >
-                {allLearned ? '✓ Aprender' : 'Aprender'}
+                {allLearned ? '✓ Learn' : 'Learn'}
               </span>
             ) : (
               <Link
                 to={`/pgn/${pgn.id}?tab=learn`}
-                aria-label={`Aprender ${pgn.name}`}
+                aria-label={`Learn ${pgn.name}`}
                 className={buttonClasses({ variant: 'secondary' })}
               >
-                Aprender
+                Learn
               </Link>
             )}
           </div>

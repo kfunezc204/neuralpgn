@@ -76,7 +76,7 @@ export function ArchiveSection({
         >
           ▶
         </span>
-        <span className="min-w-0 flex-1">📁 Archivo</span>
+        <span className="min-w-0 flex-1">📁 Archive</span>
         <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-ink-muted">
           {entries.length}
         </span>
@@ -182,11 +182,11 @@ export function ArchiveSection({
                       ariaLabel={`Acciones sobre ${label}`}
                       items={[
                         {
-                          label: 'Restaurar',
+                          label: 'Restore',
                           onClick: () => onRestore(line.id),
                         },
                         {
-                          label: 'Eliminar permanentemente',
+                          label: 'Delete permanently',
                           onClick: () => onDelete(line.id),
                           danger: true,
                         },

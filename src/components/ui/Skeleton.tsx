@@ -34,7 +34,7 @@ export function CourseCardSkeleton() {
 
 export function LibrarySkeleton() {
   return (
-    <ul aria-label="Cargando biblioteca" className="mt-8 space-y-3">
+    <ul aria-label="Loading library" className="mt-8 space-y-3">
       <CourseCardSkeleton />
       <CourseCardSkeleton />
       <CourseCardSkeleton />
@@ -44,7 +44,7 @@ export function LibrarySkeleton() {
 
 export function SidebarSkeleton() {
   return (
-    <div aria-label="Cargando capítulos" className="space-y-3 p-3">
+    <div aria-label="Loading chapters" className="space-y-3 p-3">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <div key={i} className="flex items-center gap-2">
           <Bone className="h-4 w-4 rounded-full" />

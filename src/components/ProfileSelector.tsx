@@ -58,7 +58,7 @@ export function ProfileSelector({
         />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">NeuralPGN</h1>
-          <p className="text-sm text-ink-muted">¿Quién entrena hoy?</p>
+          <p className="text-sm text-ink-muted">Who is training today?</p>
         </div>
       </header>
       {profiles.length > 0 && (
@@ -90,8 +90,8 @@ export function ProfileSelector({
                   type="button"
                   onClick={() => setPendingDelete(p)}
                   disabled={busy}
-                  aria-label={`Eliminar perfil ${p.name}`}
-                  title="Eliminar perfil"
+                  aria-label={`Delete profile ${p.name}`}
+                  title="Delete profile"
                   className="rounded-lg border border-line px-3 text-ink-faint transition-colors duration-150 hover:border-danger/30 hover:bg-danger-soft hover:text-danger"
                 >
                   ✕
@@ -103,7 +103,7 @@ export function ProfileSelector({
       )}
       <div className="mt-8 border-t border-line pt-6">
         <h2 className="text-sm font-medium text-ink-muted">
-          Crear un perfil nuevo
+          Create a new profile
         </h2>
         <div className="mt-2 flex gap-2">
           <input
@@ -113,7 +113,7 @@ export function ProfileSelector({
             onKeyDown={(e) => {
               if (e.key === 'Enter') void handleCreate()
             }}
-            placeholder="Nombre"
+            placeholder="Name"
             className="flex-1 rounded-md border border-line-strong bg-surface-1 px-3 py-2 text-sm text-ink placeholder:text-ink-faint"
             disabled={busy}
           />
@@ -123,17 +123,17 @@ export function ProfileSelector({
             disabled={busy || !name.trim()}
             className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover disabled:bg-surface-3 disabled:text-ink-faint"
           >
-            Crear
+            Create
           </button>
         </div>
       </div>
       {pendingDelete && (
         <ConfirmDialog
           variant="danger"
-          title={`Eliminar el perfil "${pendingDelete.name}"`}
-          body="Se eliminará el perfil y todo su progreso. Esta acción no se puede deshacer."
-          confirmLabel="Eliminar perfil"
-          cancelLabel="Cancelar"
+          title={`Delete profile "${pendingDelete.name}"`}
+          body="The profile and all its progress will be deleted. This cannot be undone."
+          confirmLabel="Delete profile"
+          cancelLabel="Cancel"
           onConfirm={() => void confirmDelete()}
           onCancel={() => setPendingDelete(null)}
         />

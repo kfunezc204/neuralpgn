@@ -78,7 +78,7 @@ export function PgnDropZone({ onPgnText }: PgnDropZoneProps) {
           <>
             <p className="text-3xl">♞</p>
             <p className="mt-2 text-sm font-medium text-ink">
-              Suelta el archivo .pgn para importarlo
+              Drop the .pgn file to import it
             </p>
           </>
         )}

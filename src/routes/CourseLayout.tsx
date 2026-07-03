@@ -410,9 +410,9 @@ export function CourseLayout() {
       if (decision.kind === 'warn') {
         const label = abandonedVariantLabel()
         if (label) {
-          setToast({ message: `Variante "${label}" no se guardará` })
+          setToast({ message: `Line "${label}" will not be saved` })
         } else {
-          setToast({ message: 'La variante no se guardará' })
+          setToast({ message: 'The line will not be saved' })
         }
       }
     }
@@ -508,10 +508,10 @@ export function CourseLayout() {
       Date.now(),
     )
     setToast({
-      message: label ? `Variante "${label}" archivada` : 'Variante archivada',
+      message: label ? `Line "${label}" archived` : 'Line archived',
       durationMs: 5000,
       action: {
-        label: 'Deshacer',
+        label: 'Undo',
         onClick: () => void undoArchive(targetLineId),
       },
     })
@@ -549,19 +549,17 @@ export function CourseLayout() {
       await handleNavigateNext()
     }
     await refreshSidebar()
-    const label = `${ids.length} variantes`
+    const label = `${ids.length} lines`
     undoBuffer.push({ kind: 'archive', lineIds: ids, label }, Date.now())
     const baseMessage =
-      ids.length === 1
-        ? '1 variante archivada'
-        : `${ids.length} variantes archivadas`
+      ids.length === 1 ? '1 line archived' : `${ids.length} lines archived`
     setToast({
       message: warnProgress
-        ? `${baseMessage} · Tu progreso no se guardará`
+        ? `${baseMessage} · Your progress will not be saved`
         : baseMessage,
       durationMs: 5000,
       action: {
-        label: 'Deshacer',
+        label: 'Undo',
         onClick: () => void undoBulkArchive(ids),
       },
     })
@@ -589,17 +587,15 @@ export function CourseLayout() {
     bumpSelection()
     await repo.unarchiveLines(ids)
     await refreshSidebar()
-    const label = `${ids.length} variantes`
+    const label = `${ids.length} lines`
     undoBuffer.push({ kind: 'restore', lineIds: ids, label }, Date.now())
     const message =
-      ids.length === 1
-        ? '1 variante restaurada'
-        : `${ids.length} variantes restauradas`
+      ids.length === 1 ? '1 line restored' : `${ids.length} lines restored`
     setToast({
       message,
       durationMs: 5000,
       action: {
-        label: 'Deshacer',
+        label: 'Undo',
         onClick: () => void undoBulkRestore(ids),
       },
     })
@@ -642,16 +638,14 @@ export function CourseLayout() {
     } catch (err) {
       console.error('deleteLinesHard failed', err)
       await refreshSidebar()
-      setToast({ message: 'No se pudieron eliminar las variantes' })
+      setToast({ message: 'The lines could not be deleted' })
       return
     }
     await refreshSidebar()
     undoBuffer.clear()
     setToast({
       message:
-        ids.length === 1
-          ? '1 variante eliminada'
-          : `${ids.length} variantes eliminadas`,
+        ids.length === 1 ? '1 line deleted' : `${ids.length} lines deleted`,
     })
     if (wasActiveInBulk) {
       navigate(`/pgn/${pgnId}`)
@@ -667,10 +661,10 @@ export function CourseLayout() {
       Date.now(),
     )
     setToast({
-      message: label ? `Variante "${label}" restaurada` : 'Variante restaurada',
+      message: label ? `Line "${label}" restored` : 'Line restored',
       durationMs: 5000,
       action: {
-        label: 'Deshacer',
+        label: 'Undo',
         onClick: () => void undoRestore(targetLineId),
       },
     })
@@ -720,13 +714,13 @@ export function CourseLayout() {
     } catch (err) {
       console.error('deleteLineHard failed', err)
       await refreshSidebar()
-      setToast({ message: 'No se pudo eliminar la variante' })
+      setToast({ message: 'The line could not be deleted' })
       return
     }
     await refreshSidebar()
     // No undo for hard delete — the toast is informational only.
     undoBuffer.clear()
-    setToast({ message: 'Variante eliminada' })
+    setToast({ message: 'Line deleted' })
     if (wasActive) {
       navigate(`/pgn/${pgnId}`)
     }
@@ -737,7 +731,7 @@ export function CourseLayout() {
     if (selectedLineId !== null) return
     const id = Number(pgnId)
     if (!Number.isFinite(id)) {
-      setAutoPickError('PGN inválido')
+      setAutoPickError('Invalid PGN')
       return
     }
     let cancelled = false
@@ -780,9 +774,9 @@ export function CourseLayout() {
         const banner =
           incomingBanner ??
           (wantedReview && redirect.query === '?tab=learn'
-            ? 'Sin repasos pendientes — hora de aprender variantes nuevas'
+            ? 'No reviews due — time to learn new lines'
             : wantedReview && redirect.query === '?mode=refresh'
-              ? 'Sin repasos ni variantes nuevas — repaso libre'
+              ? 'No reviews or new lines — free review'
               : null)
         navigate(`/pgn/${pgnId}/line/${redirect.lineId}${redirect.query}`, {
           replace: true,
@@ -790,7 +784,7 @@ export function CourseLayout() {
         })
         return
       }
-      setAutoPickError('Este curso no tiene contenido para entrenar.')
+      setAutoPickError('This course has no content to train.')
     })()
     return () => {
       cancelled = true
@@ -891,7 +885,7 @@ export function CourseLayout() {
               className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-ink-muted hover:bg-surface-3"
             >
               <span>←</span>
-              <span className="min-w-0 flex-1 truncate">Archivo · cerrar</span>
+              <span className="min-w-0 flex-1 truncate">Archive · close</span>
             </button>
           ) : (
             <CourseTabs
@@ -928,7 +922,7 @@ export function CourseLayout() {
             const toggleAllAction =
               scopeIds.length > 0
                 ? {
-                    label: allSelected ? 'Ninguna' : 'Todas',
+                    label: allSelected ? 'None' : 'All',
                     onClick: () => {
                       if (allSelected) {
                         selection.selectNone()
@@ -946,11 +940,11 @@ export function CourseLayout() {
               scope === 'archive'
                 ? [
                     {
-                      label: 'Restaurar',
+                      label: 'Restore',
                       onClick: () => void handleBulkRestore(),
                     },
                     {
-                      label: 'Eliminar perm.',
+                      label: 'Delete perm.',
                       onClick: () => requestBulkDelete(),
                       danger: true,
                     },
@@ -958,7 +952,7 @@ export function CourseLayout() {
                 : scope?.startsWith('chapter:') || scope === 'singletons:active'
                   ? [
                       {
-                        label: 'Archivar',
+                        label: 'Archive',
                         onClick: () => void handleBulkArchive(),
                       },
                     ]
@@ -985,7 +979,7 @@ export function CourseLayout() {
             to="/"
             className="text-sm text-ink-muted hover:text-ink hover:underline"
           >
-            ← Biblioteca
+            ← Library
           </Link>
           {pgn && (
             <div className="flex items-center gap-2 text-sm font-medium text-ink-muted">
@@ -993,13 +987,13 @@ export function CourseLayout() {
               {pgn.is_challenge && (
                 <span
                   className="rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-xs text-accent"
-                  title="Curso de reto: las posiciones nuevas se preguntan a ciegas"
+                  title="Challenge course: new positions are quizzed blind"
                 >
-                  ⚡ Reto
+                  ⚡ Challenge
                   {firstTryStats && firstTryStats.total > 0 && (
                     <>
                       {' '}
-                      · a la primera{' '}
+                      · first try{' '}
                       {Math.round(
                         (firstTryStats.first_try / firstTryStats.total) * 100,
                       )}
@@ -1016,9 +1010,9 @@ export function CourseLayout() {
                 type="button"
                 onClick={() => navigate(`/pgn/${pgnId}/puzzles`)}
                 className="rounded border border-line-strong px-2 py-1 text-xs text-ink-muted hover:bg-surface-3"
-                title="Puzzles de las posiciones donde más fallas — no escribe en SRS"
+                title="Puzzles from the positions you miss most — never writes to SRS"
               >
-                🎯 Puntos débiles ({weakPointCount})
+                🎯 Weak points ({weakPointCount})
               </button>
             )}
             {allLearned && modeOverride !== 'refresh' && (
@@ -1026,9 +1020,9 @@ export function CourseLayout() {
                 type="button"
                 onClick={handleRepasarCiclo}
                 className="rounded border border-line-strong px-2 py-1 text-xs text-ink-muted hover:bg-surface-3"
-                title="Repaso libre del PGN — sin escribir en SRS"
+                title="Free review of the whole PGN — nothing written to SRS"
               >
-                ↻ Repasar ciclo
+                ↻ Review cycle
               </button>
             )}
           </div>
@@ -1039,24 +1033,23 @@ export function CourseLayout() {
               archivedEntries.length > 0 ? (
                 <div className="mx-auto max-w-md rounded-lg border border-line bg-surface-1 p-6 text-center">
                   <h2 className="text-lg font-medium text-ink">
-                    No hay variantes activas
+                    No active lines
                   </h2>
                   <p className="mt-2 text-sm text-ink-muted">
-                    Todas las variantes de este curso están archivadas. Restaura
-                    alguna desde la sección <strong>📁 Archivo</strong> del
-                    sidebar.
+                    Every line in this course is archived. Restore one from the
+                    <strong> 📁 Archive</strong> section of the sidebar.
                   </p>
                 </div>
               ) : (
                 <p className="text-sm text-ink-muted">{autoPickError}</p>
               )
             ) : (
-              <p className="text-sm text-ink-muted">Cargando…</p>
+              <p className="text-sm text-ink-muted">Loading…</p>
             )
           ) : resolvedMode === null ? (
             // Transient: the dead-end guard effect is about to bounce this
             // URL to the course root (or refresh a stale sidebar clock).
-            <p className="text-sm text-ink-muted">Cargando…</p>
+            <p className="text-sm text-ink-muted">Loading…</p>
           ) : (
             <WalkCore
               key={`${selectedLineId}:${resolvedMode}`}
@@ -1073,7 +1066,7 @@ export function CourseLayout() {
                       onClick={() => navigate(`/pgn/${pgnId}/puzzles`)}
                       className="rounded-md border border-line-strong px-3 py-2 text-sm text-ink-muted transition-colors duration-150 hover:bg-surface-2"
                     >
-                      🎯 Entrenar puntos débiles ({weakPointCount})
+                      🎯 Train weak points ({weakPointCount})
                     </button>
                   ) : allLearned ? (
                     <button
@@ -1081,7 +1074,7 @@ export function CourseLayout() {
                       onClick={handleRepasarCiclo}
                       className="rounded-md border border-line-strong px-3 py-2 text-sm text-ink-muted transition-colors duration-150 hover:bg-surface-2"
                     >
-                      ↻ Repasar ciclo
+                      ↻ Review cycle
                     </button>
                   ) : null
                 ) : null
@@ -1129,20 +1122,20 @@ export function CourseLayout() {
       {pendingDelete && (
         <ConfirmDialog
           variant="danger"
-          title="Eliminar variante permanentemente"
-          body={`Esta acción no se puede deshacer. La variante "${pendingDelete.label}" y todo su historial de aprendizaje se eliminarán para siempre.`}
-          confirmLabel="Eliminar para siempre"
-          cancelLabel="Cancelar"
+          title="Delete line permanently"
+          body={`This cannot be undone. The line "${pendingDelete.label}" and all its learning history will be deleted forever.`}
+          confirmLabel="Delete forever"
+          cancelLabel="Cancel"
           onConfirm={() => void confirmDelete()}
           onCancel={() => setPendingDelete(null)}
         />
       )}
       {limitWarn && (
         <ConfirmDialog
-          title="Límite diario alcanzado"
-          body={`Hoy ya aprendiste ${limitWarn.newToday} variantes nuevas (tu límite es ${limitWarn.dailyLimit}). El SRS te las cobrará en los próximos días. Puedes continuar igual o volver mañana.`}
-          confirmLabel="Continuar igual"
-          cancelLabel="Volver a la biblioteca"
+          title="Daily limit reached"
+          body={`You already learned ${limitWarn.newToday} new lines today (your limit is ${limitWarn.dailyLimit}). The SRS will charge you for them over the coming days. You can continue anyway or come back tomorrow.`}
+          confirmLabel="Continue anyway"
+          cancelLabel="Back to library"
           onConfirm={() => {
             overrideDailyLimit()
             setLimitWarn(null)
@@ -1156,10 +1149,10 @@ export function CourseLayout() {
       {pendingBulkDelete && (
         <ConfirmDialog
           variant="danger"
-          title={`Eliminar ${pendingBulkDelete.ids.length} variantes permanentemente`}
-          body={`Esta acción no se puede deshacer. ${pendingBulkDelete.ids.length} variantes y todo su historial de aprendizaje se eliminarán para siempre.`}
-          confirmLabel="Eliminar para siempre"
-          cancelLabel="Cancelar"
+          title={`Delete ${pendingBulkDelete.ids.length} lines permanently`}
+          body={`This cannot be undone. ${pendingBulkDelete.ids.length} lines and all their learning history will be deleted forever.`}
+          confirmLabel="Delete forever"
+          cancelLabel="Cancel"
           onConfirm={() => void confirmBulkDelete()}
           onCancel={() => setPendingBulkDelete(null)}
         />

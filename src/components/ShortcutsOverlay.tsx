@@ -52,12 +52,12 @@ export function ShortcutsOverlay() {
             id="shortcuts-overlay-title"
             className="text-base font-semibold text-ink"
           >
-            Atajos de teclado
+            Keyboard shortcuts
           </h2>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Cerrar"
+            aria-label="Close"
             className="rounded px-1.5 text-ink-faint hover:text-ink"
           >
             ✕

@@ -162,7 +162,7 @@ export function LibraryHome() {
       {update && (
         <div className="mb-4 flex items-center justify-between rounded-md border border-accent/40 bg-accent-soft px-3 py-2 text-sm">
           <span className="text-ink">
-            Nueva versión disponible: <strong>v{update.version}</strong>
+            New version available: <strong>v{update.version}</strong>
           </span>
           <button
             type="button"
@@ -170,7 +170,7 @@ export function LibraryHome() {
             disabled={installing}
             className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover disabled:opacity-50"
           >
-            {installing ? 'Descargando…' : 'Actualizar y reiniciar'}
+            {installing ? 'Downloading…' : 'Update and restart'}
           </button>
         </div>
       )}
@@ -181,31 +181,31 @@ export function LibraryHome() {
             type="button"
             onClick={profile.requestSwitch}
             className="mt-1 text-xs text-ink-faint transition-colors duration-150 hover:text-ink"
-            title="Cambiar de perfil"
+            title="Switch profile"
           >
-            Perfil: {profile.active.name} ▾
+            Profile: {profile.active.name} ▾
           </button>
           {(daySummary.reviewedToday > 0 || daySummary.newToday > 0) && (
             <p className="mt-1 text-xs text-ink-muted">
-              Hoy:{' '}
+              Today:{' '}
               <span className="font-mono tabular-nums">
                 {daySummary.reviewedToday}
               </span>{' '}
-              repasadas ·{' '}
+              reviewed ·{' '}
               <span className="font-mono tabular-nums">
                 {daySummary.newToday}
               </span>{' '}
-              nuevas
+              new
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
           {globalDueCount > 0 ? (
             <Link
-              to="/repasar-todo"
+              to="/review-all"
               className={buttonClasses({ variant: 'primary' })}
             >
-              Repasar todo
+              Review all
               <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-contrast/15 px-1.5 font-mono text-xs font-semibold tabular-nums">
                 {globalDueCount}
               </span>
@@ -213,31 +213,31 @@ export function LibraryHome() {
           ) : globalNextDueAt ? (
             <span
               aria-disabled="true"
-              title="No hay líneas due"
+              title="No lines due"
               className={buttonClasses({ disabled: true })}
             >
-              Al día ✓ · {formatNextReview(globalNextDueAt, new Date())}
+              Up to date ✓ · {formatNextReview(globalNextDueAt, new Date())}
             </span>
           ) : (
             <span
               aria-disabled="true"
-              title="No hay líneas due"
+              title="No lines due"
               className={buttonClasses({ disabled: true })}
             >
-              Repasar todo · 0
+              Review all · 0
             </span>
           )}
           <Link
             to="/import"
             className={buttonClasses({ variant: 'secondary' })}
           >
-            Importar PGN
+            Import PGN
           </Link>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            aria-label="Ajustes"
-            title="Ajustes"
+            aria-label="Settings"
+            title="Settings"
             className="flex h-9 w-9 items-center justify-center rounded-md border border-line-strong text-ink-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
           >
             ⚙
@@ -251,14 +251,14 @@ export function LibraryHome() {
         <div className="mt-8">
           <EmptyState
             icon={<span className="text-3xl">♞</span>}
-            title="Tu biblioteca está vacía"
-            hint="Importa un PGN para empezar a entrenar tu repertorio."
+            title="Your library is empty"
+            hint="Import a PGN to start training your repertoire."
             action={
               <Link
                 to="/import"
                 className={buttonClasses({ variant: 'primary' })}
               >
-                Importar PGN
+                Import PGN
               </Link>
             }
           />
@@ -285,10 +285,10 @@ export function LibraryHome() {
       )}
       {pendingRename && (
         <PromptDialog
-          title="Renombrar curso"
+          title="Rename course"
           initialValue={pendingRename.name}
-          placeholder="Nombre del curso"
-          confirmLabel="Renombrar"
+          placeholder="Course name"
+          confirmLabel="Rename"
           onConfirm={(name) => void confirmRename(name)}
           onCancel={() => setPendingRename(null)}
         />
@@ -296,10 +296,10 @@ export function LibraryHome() {
       {pendingDelete && (
         <ConfirmDialog
           variant="danger"
-          title={`Borrar "${pendingDelete.name}"`}
-          body="Se eliminará el curso y todo su progreso de aprendizaje. Esta acción no se puede deshacer."
-          confirmLabel="Borrar curso"
-          cancelLabel="Cancelar"
+          title={`Delete "${pendingDelete.name}"`}
+          body="The course and all its learning progress will be deleted. This cannot be undone."
+          confirmLabel="Delete course"
+          cancelLabel="Cancel"
           onConfirm={() => void confirmDelete()}
           onCancel={() => setPendingDelete(null)}
         />

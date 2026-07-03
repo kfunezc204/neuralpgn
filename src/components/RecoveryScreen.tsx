@@ -42,18 +42,18 @@ export function RecoveryScreen({
   return (
     <main className="mx-auto max-w-xl p-8">
       <h1 className="text-2xl font-semibold text-danger">
-        No pudimos abrir tu base de datos
+        We couldn't open your database
       </h1>
       <pre className="mt-4 whitespace-pre-wrap rounded bg-surface-2 p-3 text-xs text-ink-muted">
         {error}
       </pre>
       {backups.length === 0 ? (
         <p className="mt-6 text-sm text-ink-muted">
-          No hay backups automáticos disponibles.
+          No automatic backups available.
         </p>
       ) : (
         <>
-          <h2 className="mt-8 text-base font-medium">Backups automáticos</h2>
+          <h2 className="mt-8 text-base font-medium">Automatic backups</h2>
           <ul className="mt-3 space-y-2">
             {backups.map((f) => (
               <li key={f}>
@@ -71,12 +71,12 @@ export function RecoveryScreen({
       )}
 
       <div className="mt-8 border-t border-line pt-6">
-        <h2 className="text-base font-medium">Importar backup manual</h2>
+        <h2 className="text-base font-medium">Import a manual backup</h2>
         <p className="mt-1 text-xs text-ink-muted">
-          Seleccioná un archivo JSON exportado previamente.
+          Pick a previously exported JSON file.
         </p>
         <label className="mt-3 inline-block cursor-pointer rounded border border-line-strong px-3 py-2 text-sm hover:bg-surface-2">
-          Elegir archivo
+          Choose file
           <input
             type="file"
             accept=".json,application/json"
@@ -94,7 +94,7 @@ export function RecoveryScreen({
         onClick={onRetry}
         className="mt-8 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover"
       >
-        Reintentar
+        Retry
       </button>
     </main>
   )

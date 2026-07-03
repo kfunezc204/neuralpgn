@@ -15,7 +15,7 @@ export function App() {
         <Route path="/pgn/:pgnId" element={<CourseLayout />} />
         <Route path="/pgn/:pgnId/line/:lineId" element={<CourseLayout />} />
         <Route path="/pgn/:pgnId/puzzles" element={<PuzzleSessionView />} />
-        <Route path="/repasar-todo" element={<GlobalWalkView />} />
+        <Route path="/review-all" element={<GlobalWalkView />} />
       </Routes>
       <ShortcutsOverlay />
     </>

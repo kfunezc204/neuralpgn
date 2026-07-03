@@ -35,15 +35,15 @@ function describeStudyError(err: unknown): string {
   if (err instanceof StudyDownloadError) {
     switch (err.kind) {
       case 'not-found-or-private':
-        return 'Ese estudio no existe o es privado. Solo se pueden importar estudios públicos.'
+        return 'That study does not exist or is private. Only public studies can be imported.'
       case 'export-disabled':
-        return 'El autor de ese estudio ha desactivado la exportación de PGN, así que no se puede importar.'
+        return 'The author of that study disabled PGN export, so it cannot be imported.'
       case 'rate-limited':
-        return 'Lichess está limitando las peticiones. Espera un momento y vuelve a intentarlo.'
+        return 'Lichess is rate-limiting requests. Wait a moment and try again.'
       case 'network':
-        return 'No se pudo conectar con Lichess. Comprueba tu conexión y reinténtalo.'
+        return 'Could not connect to Lichess. Check your connection and retry.'
       case 'unexpected':
-        return 'Lichess respondió algo inesperado. Inténtalo de nuevo en un rato.'
+        return 'Lichess returned something unexpected. Try again in a while.'
     }
   }
   return err instanceof Error ? err.message : String(err)
@@ -123,7 +123,7 @@ export function ImportView() {
   async function handleStudyImport() {
     const located = locateStudy(studyUrl)
     if (!located.ok) {
-      setStudyError('La URL no parece de un estudio de Lichess.')
+      setStudyError('That URL does not look like a Lichess study.')
       return
     }
     setStudyError(null)
@@ -188,8 +188,8 @@ export function ImportView() {
       )
       navigate(`/pgn/${pgnId}?tab=learn`, {
         state: {
-          banner: `«${baseName}» importado — ${
-            lineCount === 1 ? '1 variante' : `${lineCount} variantes`
+          banner: `“${baseName}” imported — ${
+            lineCount === 1 ? '1 line' : `${lineCount} lines`
           }`,
         },
       })
@@ -206,9 +206,9 @@ export function ImportView() {
       <PgnDropZone onPgnText={loadPreview} />
       {duplicate && (
         <ConfirmDialog
-          title="Estudio ya importado"
-          body={`Este estudio ya está importado como «${duplicate.existingCourseName}». Puedes crear un curso duplicado (empezará sin progreso) o cancelar.`}
-          confirmLabel="Crear duplicado"
+          title="Study already imported"
+          body={`This study is already imported as “${duplicate.existingCourseName}”. You can create a duplicate course (it starts with no progress) or cancel.`}
+          confirmLabel="Create duplicate"
           onConfirm={() => {
             openStudyPreview(
               duplicate.studyId,
@@ -224,20 +224,20 @@ export function ImportView() {
         to="/"
         className="text-sm text-ink-muted transition-colors duration-150 hover:text-ink"
       >
-        ← Volver
+        ← Back
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">Importar PGN</h1>
+      <h1 className="mt-2 text-2xl font-semibold">Import PGN</h1>
 
       {!preview && (
         <div className="mt-6">
           <EmptyState
             icon={<span className="text-3xl">♞</span>}
-            title="Arrastra tu archivo .pgn aquí"
-            hint="o elígelo desde tu equipo."
+            title="Drop your .pgn file here"
+            hint="or pick it from your computer."
             action={
               <label className="inline-block">
                 <span className="cursor-pointer rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover">
-                  Elegir archivo .pgn
+                  Choose .pgn file
                 </span>
                 <input
                   type="file"
@@ -251,7 +251,7 @@ export function ImportView() {
 
           <section className="mt-6 rounded-xl border border-line bg-surface-1 p-4">
             <h2 className="text-sm font-medium text-ink">
-              o pega la URL de un estudio de Lichess
+              or paste a Lichess study URL
             </h2>
             <form
               className="mt-3 flex gap-2"
@@ -273,12 +273,12 @@ export function ImportView() {
                 disabled={downloading || studyUrl.trim() === ''}
                 className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover disabled:opacity-50"
               >
-                {downloading ? 'Descargando…' : 'Importar estudio'}
+                {downloading ? 'Downloading…' : 'Import study'}
               </button>
             </form>
             {downloading && (
               <p className="mt-2 text-xs text-ink-muted">
-                Descargando el estudio desde Lichess…
+                Downloading the study from Lichess…
               </p>
             )}
             {studyError && (
@@ -296,7 +296,7 @@ export function ImportView() {
         <>
           <label className="mt-6 inline-block">
             <span className="cursor-pointer text-sm text-ink-muted underline-offset-2 transition-colors duration-150 hover:text-ink hover:underline">
-              Elegir otro archivo .pgn
+              Choose another .pgn file
             </span>
             <input
               type="file"
@@ -308,8 +308,7 @@ export function ImportView() {
           <section className="mt-6">
             <h2 className="text-lg font-medium">
               {preview.result.chapters.length} chapter
-              {preview.result.chapters.length === 1 ? '' : 's'} detectado
-              {preview.result.chapters.length === 1 ? '' : 's'}
+              {preview.result.chapters.length === 1 ? '' : 's'} detected
             </h2>
             <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-surface-1">
               {preview.result.chapters.map((c) => {
@@ -327,7 +326,7 @@ export function ImportView() {
                       </span>
                       {needsSide && (
                         <span className="ml-2 text-xs text-accent">
-                          (posición inicial — elige lado)
+                          (initial position — choose side)
                         </span>
                       )}
                     </div>
@@ -360,7 +359,7 @@ export function ImportView() {
           {preview.result.warnings.length > 0 && (
             <section className="mt-4 rounded-md border border-accent/30 bg-accent-soft p-3 text-sm">
               <p className="font-medium text-accent">
-                {preview.result.warnings.length} líneas con warning
+                {preview.result.warnings.length} lines with warnings
               </p>
               <ul className="mt-2 list-disc pl-5 text-xs text-accent">
                 {preview.result.warnings.slice(0, 10).map((w, i) => (
@@ -371,7 +370,7 @@ export function ImportView() {
                   </li>
                 ))}
                 {preview.result.warnings.length > 10 && (
-                  <li>…y {preview.result.warnings.length - 10} más</li>
+                  <li>…and {preview.result.warnings.length - 10} more</li>
                 )}
               </ul>
             </section>
@@ -386,12 +385,11 @@ export function ImportView() {
             />
             <span className="text-sm">
               <span className="font-medium text-ink">
-                Este PGN es de ejercicios — rétame directamente
+                This PGN is exercises — challenge me directly
               </span>
               <span className="mt-0.5 block text-xs text-ink-muted">
-                Las posiciones nuevas se preguntan a ciegas en vez de enseñarte
-                la solución primero. Ideal para táctica; déjalo apagado para
-                repertorios.
+                New positions are quizzed blind instead of teaching you the
+                solution first. Great for tactics; leave it off for repertoires.
               </span>
             </span>
           </label>
@@ -402,12 +400,12 @@ export function ImportView() {
             disabled={saving}
             className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover disabled:opacity-50"
           >
-            {saving ? 'Guardando…' : 'Confirmar import'}
+            {saving ? 'Saving…' : 'Confirm import'}
           </button>
 
           {saveError && (
             <div className="mt-4 rounded-md border border-danger/40 bg-danger-soft p-3 text-sm text-danger">
-              <p className="font-medium">Error guardando:</p>
+              <p className="font-medium">Save error:</p>
               <pre className="mt-1 whitespace-pre-wrap text-xs">
                 {saveError}
               </pre>

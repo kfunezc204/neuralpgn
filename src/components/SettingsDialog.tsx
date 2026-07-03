@@ -70,11 +70,11 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
           id="settings-dialog-title"
           className="text-base font-semibold text-ink"
         >
-          Ajustes
+          Settings
         </h2>
         <label className="mt-4 block">
           <span className="text-sm font-medium text-ink-muted">
-            Límite diario de variantes nuevas
+            Daily limit of new lines
           </span>
           <input
             type="number"
@@ -85,13 +85,12 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
             className="mt-1.5 w-full rounded-md border border-line-strong bg-surface-1 px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <span className="mt-1 block text-xs text-ink-faint">
-            Protege tus próximos días de una avalancha de repasos. 0 = sin
-            límite.
+            Protects your coming days from a review avalanche. 0 = no limit.
           </span>
         </label>
         <label className="mt-4 flex items-center justify-between gap-3">
           <span className="text-sm font-medium text-ink-muted">
-            Sonido del quiz
+            Quiz sounds
           </span>
           <input
             type="checkbox"
@@ -107,7 +106,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
             onClick={onClose}
             className="rounded-md border border-line-strong bg-surface-2 px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors duration-150 hover:bg-surface-3"
           >
-            Cancelar
+            Cancel
           </button>
           <button
             type="button"
@@ -115,7 +114,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
             disabled={!loaded}
             className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover disabled:bg-surface-3 disabled:text-ink-faint"
           >
-            Guardar
+            Save
           </button>
         </div>
       </div>

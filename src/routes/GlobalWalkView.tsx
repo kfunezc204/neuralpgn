@@ -94,9 +94,9 @@ export function GlobalWalkView() {
           to="/"
           className="text-sm text-ink-muted transition-colors duration-150 hover:text-ink"
         >
-          ← Volver
+          ← Back
         </Link>
-        <p className="mt-6 text-ink-muted">No hay líneas due ahora mismo.</p>
+        <p className="mt-6 text-ink-muted">No lines due right now.</p>
       </main>
     )
   }
@@ -105,7 +105,7 @@ export function GlobalWalkView() {
     return (
       <main className="view-enter mx-auto max-w-3xl p-6">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Sesión global completa
+          Global session complete
         </h1>
         <p className="mt-2 font-mono tabular-nums text-ink-muted">
           <span className="text-ok">{summary.good} Good</span> ·{' '}
@@ -117,7 +117,7 @@ export function GlobalWalkView() {
             to="/"
             className="rounded-md border border-line-strong px-4 py-2 text-sm text-ink-muted transition-colors duration-150 hover:bg-surface-2"
           >
-            Cerrar
+            Close
           </Link>
         </div>
       </main>
@@ -125,7 +125,7 @@ export function GlobalWalkView() {
   }
 
   if (!ref) {
-    return <main className="p-6 text-sm text-ink-muted">Cargando…</main>
+    return <main className="p-6 text-sm text-ink-muted">Loading…</main>
   }
 
   return (
@@ -136,11 +136,11 @@ export function GlobalWalkView() {
             to="/"
             className="text-sm text-ink-muted hover:text-ink hover:underline"
           >
-            ← Biblioteca
+            ← Library
           </Link>
-          <div className="text-sm font-medium text-ink-muted">Repasar todo</div>
+          <div className="text-sm font-medium text-ink-muted">Review all</div>
           <span className="font-mono text-xs tabular-nums text-ink-muted">
-            Línea {poolIdx + 1} / {pool.length} · {ref.chapter_name}
+            Line {poolIdx + 1} / {pool.length} · {ref.chapter_name}
           </span>
         </header>
         <main className="flex-1 overflow-y-auto p-6">

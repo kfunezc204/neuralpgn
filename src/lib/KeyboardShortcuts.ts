@@ -16,36 +16,39 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     context: 'General',
     shortcuts: [
-      { keys: '?', description: 'Mostrar / ocultar este panel de atajos' },
-      { keys: 'Esc', description: 'Cerrar diálogos y menús' },
+      { keys: '?', description: 'Show / hide this shortcuts panel' },
+      { keys: 'Esc', description: 'Close dialogs and menus' },
     ],
   },
   {
-    context: 'Tablero (repaso y replay)',
+    context: 'Board (review and replay)',
     shortcuts: [
-      { keys: '← →', description: 'Jugada anterior / siguiente' },
-      { keys: 'Inicio / Fin', description: 'Ir al inicio / final de la línea' },
+      { keys: '← →', description: 'Previous / next move' },
       {
-        keys: 'Enter o →',
-        description: 'Siguiente variante (al completar una línea)',
+        keys: 'Home / End',
+        description: 'Jump to the start / end of the line',
+      },
+      {
+        keys: 'Enter or →',
+        description: 'Next line (after completing one)',
       },
     ],
   },
   {
-    context: 'Sidebar del curso',
+    context: 'Course sidebar',
     shortcuts: [
       {
-        keys: 'Shift + clic',
-        description: 'Seleccionar un rango de variantes',
+        keys: 'Shift + click',
+        description: 'Select a range of lines',
       },
-      { keys: 'Esc', description: 'Limpiar la selección múltiple' },
+      { keys: 'Esc', description: 'Clear the multi-selection' },
     ],
   },
   {
-    context: 'Diálogos',
+    context: 'Dialogs',
     shortcuts: [
-      { keys: 'Enter', description: 'Confirmar (renombrar, crear perfil)' },
-      { keys: 'Esc', description: 'Cancelar' },
+      { keys: 'Enter', description: 'Confirm (rename, create profile)' },
+      { keys: 'Esc', description: 'Cancel' },
     ],
   },
 ]

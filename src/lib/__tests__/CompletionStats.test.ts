@@ -36,12 +36,12 @@ describe('CompletionStats.computeAccuracyPercent', () => {
 describe('CompletionStats.formatDueIn', () => {
   const NOW = new Date('2026-05-19T12:00:00Z')
 
-  it('returns "ahora" when the due date is in the past or exactly now', () => {
-    expect(formatDueIn(new Date('2026-05-10T00:00:00Z'), NOW)).toBe('ahora')
-    expect(formatDueIn(NOW, NOW)).toBe('ahora')
+  it('returns "now" when the due date is in the past or exactly now', () => {
+    expect(formatDueIn(new Date('2026-05-10T00:00:00Z'), NOW)).toBe('now')
+    expect(formatDueIn(NOW, NOW)).toBe('now')
   })
 
-  it('shows a 10-minute learning step as minutes, not as "1 día"', () => {
+  it('shows a 10-minute learning step as minutes, not as "1 day"', () => {
     expect(formatDueIn(new Date('2026-05-19T12:10:00Z'), NOW)).toBe('10 min')
   })
 
@@ -53,12 +53,12 @@ describe('CompletionStats.formatDueIn', () => {
     expect(formatDueIn(new Date('2026-05-19T20:00:00Z'), NOW)).toBe('8 h')
   })
 
-  it('shows a full 24-hour gap as "1 día"', () => {
-    expect(formatDueIn(new Date('2026-05-20T12:00:00Z'), NOW)).toBe('1 día')
+  it('shows a full 24-hour gap as "1 day"', () => {
+    expect(formatDueIn(new Date('2026-05-20T12:00:00Z'), NOW)).toBe('1 day')
   })
 
-  it('shows ten days ahead as "10 días"', () => {
-    expect(formatDueIn(new Date('2026-05-29T12:00:00Z'), NOW)).toBe('10 días')
+  it('shows ten days ahead as "10 days"', () => {
+    expect(formatDueIn(new Date('2026-05-29T12:00:00Z'), NOW)).toBe('10 days')
   })
 })
 

@@ -133,18 +133,18 @@ export function PuzzleSessionView() {
   const backHref = `/pgn/${pgnId}`
 
   if (items === null) {
-    return <main className="p-6 text-sm text-ink-muted">Cargando…</main>
+    return <main className="p-6 text-sm text-ink-muted">Loading…</main>
   }
 
   if (items.length === 0) {
     return (
       <main className="mx-auto max-w-3xl p-6">
         <Link to={backHref} className="text-sm text-ink-muted hover:underline">
-          ← Volver al curso
+          ← Back to course
         </Link>
-        <h1 className="mt-6 text-xl font-semibold">🎯 Puntos débiles</h1>
+        <h1 className="mt-6 text-xl font-semibold">🎯 Weak points</h1>
         <p className="mt-2 text-ink-muted">
-          No hay posiciones pendientes de refuerzo. ¡Buen trabajo!
+          No positions need reinforcement. Nice work!
         </p>
       </main>
     )
@@ -153,17 +153,17 @@ export function PuzzleSessionView() {
   if (sessionDone) {
     return (
       <main className="mx-auto max-w-3xl p-6">
-        <h1 className="text-2xl font-semibold">Sesión de puzzles completa</h1>
+        <h1 className="text-2xl font-semibold">Puzzle session complete</h1>
         <p className="mt-2 text-ink-muted">
-          Resolviste <span className="font-semibold text-ok">{solved}</span> de{' '}
-          {items.length} posiciones.
+          You solved <span className="font-semibold text-ok">{solved}</span> of{' '}
+          {items.length} positions.
         </p>
         <div className="mt-6 flex gap-2">
           <Link
             to={backHref}
             className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover"
           >
-            Volver al curso
+            Back to course
           </Link>
           <button
             type="button"
@@ -173,7 +173,7 @@ export function PuzzleSessionView() {
             }}
             className="rounded-md border border-line-strong px-4 py-2 text-sm text-ink-muted transition-colors duration-150 hover:bg-surface-2"
           >
-            Otra ronda
+            Another round
           </button>
         </div>
       </main>
@@ -181,7 +181,7 @@ export function PuzzleSessionView() {
   }
 
   if (!current) {
-    return <main className="p-6 text-sm text-ink-muted">Cargando…</main>
+    return <main className="p-6 text-sm text-ink-muted">Loading…</main>
   }
 
   const expectedMove =
@@ -196,10 +196,10 @@ export function PuzzleSessionView() {
           to={backHref}
           className="text-sm text-ink-muted hover:text-ink hover:underline"
         >
-          ← Volver al curso
+          ← Back to course
         </Link>
         <div className="text-sm font-medium text-ink-muted">
-          🎯 Puntos débiles{pgnName ? ` · ${pgnName}` : ''}
+          🎯 Weak points{pgnName ? ` · ${pgnName}` : ''}
         </div>
         <span className="font-mono text-xs tabular-nums text-ink-muted">
           Puzzle {idx + 1} / {items.length} · {current.chapterName}
@@ -232,7 +232,7 @@ export function PuzzleSessionView() {
             {answer === null && (
               <>
                 <p className="text-sm text-ink-muted">
-                  Tu turno — juega la jugada
+                  Your turn — play the move
                 </p>
                 {hintShown ? (
                   <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
@@ -245,7 +245,7 @@ export function PuzzleSessionView() {
                       onClick={() => setHintShown(true)}
                       className="mt-2 text-xs text-accent underline decoration-accent/40 underline-offset-2 transition-colors duration-150 hover:text-accent-hover"
                     >
-                      Mostrar pista
+                      Show hint
                     </button>
                   )
                 )}
@@ -257,7 +257,7 @@ export function PuzzleSessionView() {
             {answer !== null && !answer.correct && (
               <>
                 <p className="text-sm font-medium text-accent">
-                  ✗ Jugaste {answer.played} — la jugada era{' '}
+                  ✗ You played {answer.played} — the move was{' '}
                   {current.expectedSan}
                 </p>
                 {current.comment && (
@@ -270,7 +270,7 @@ export function PuzzleSessionView() {
                   onClick={nextPuzzle}
                   className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover"
                 >
-                  Siguiente →
+                  Next →
                 </button>
               </>
             )}

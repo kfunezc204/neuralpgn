@@ -44,10 +44,10 @@ describe('ProfileSummary — format', () => {
       },
       NOW,
     )
-    expect(text).toBe('3 cursos · 8 repasos pendientes · usado hoy')
+    expect(text).toBe('3 courses · 8 reviews due · used today')
   })
 
-  it('uses singulars and "ayer"', () => {
+  it('uses singulars and "yesterday"', () => {
     const text = formatProfileSummary(
       {
         course_count: 1,
@@ -56,10 +56,10 @@ describe('ProfileSummary — format', () => {
       },
       NOW,
     )
-    expect(text).toBe('1 curso · 1 repaso pendiente · usado ayer')
+    expect(text).toBe('1 course · 1 review due · used yesterday')
   })
 
-  it('says "al día" when nothing is due and counts older use in days', () => {
+  it('says "up to date" when nothing is due and counts older use in days', () => {
     const text = formatProfileSummary(
       {
         course_count: 2,
@@ -68,10 +68,10 @@ describe('ProfileSummary — format', () => {
       },
       NOW,
     )
-    expect(text).toBe('2 cursos · al día · usado hace 5 días')
+    expect(text).toBe('2 courses · up to date · used 5 days ago')
   })
 
   it('describes a profile without snapshot as new', () => {
-    expect(formatProfileSummary(undefined, NOW)).toBe('Perfil nuevo')
+    expect(formatProfileSummary(undefined, NOW)).toBe('New profile')
   })
 })

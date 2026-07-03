@@ -40,7 +40,7 @@ export function ReplayControls({
           type="button"
           onClick={onFirst}
           disabled={atStart}
-          aria-label="Primer paso"
+          aria-label="First step"
           className={btnClass(atStart)}
         >
           ⏮
@@ -49,7 +49,7 @@ export function ReplayControls({
           type="button"
           onClick={onPrev}
           disabled={atStart}
-          aria-label="Paso anterior"
+          aria-label="Previous step"
           className={btnClass(atStart)}
         >
           ◀
@@ -59,7 +59,7 @@ export function ReplayControls({
             type="button"
             onClick={onNext}
             disabled={atEnd}
-            aria-label="Paso siguiente"
+            aria-label="Next step"
             className={btnClass(atEnd)}
           >
             ▶
@@ -69,7 +69,7 @@ export function ReplayControls({
           type="button"
           onClick={onLast}
           disabled={atEnd}
-          aria-label="Último paso"
+          aria-label="Last step"
           className={btnClass(atEnd)}
         >
           ⏭

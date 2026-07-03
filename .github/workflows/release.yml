@@ -31,6 +31,6 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'NeuralPGN ${{ github.ref_name }}'
-          releaseBody: 'Instaladores de Windows. La app se actualiza sola desde versiones anteriores.'
+          releaseBody: 'Windows installers. The app self-updates from earlier versions.'
           releaseDraft: false
           prerelease: false

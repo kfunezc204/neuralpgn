@@ -45,7 +45,7 @@ function StateIcon({ status }: { status: 'new' | 'learning' | 'mastered' }) {
   if (status === 'mastered') {
     return (
       <span
-        aria-label="dominada"
+        aria-label="mastered"
         className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-ok text-[10px] text-surface-0"
       >
         ✓
@@ -55,14 +55,14 @@ function StateIcon({ status }: { status: 'new' | 'learning' | 'mastered' }) {
   if (status === 'learning') {
     return (
       <span
-        aria-label="aprendida"
+        aria-label="learned"
         className="inline-block h-4 w-4 rounded-full border-2 border-accent"
       />
     )
   }
   return (
     <span
-      aria-label="no aprendida"
+      aria-label="not learned"
       className="inline-block h-4 w-4 rounded-full border border-line-strong"
     />
   )
@@ -72,7 +72,7 @@ function DueDot() {
   return (
     <span
       aria-label="due"
-      title="Repaso pendiente"
+      title="Review due"
       className="inline-block h-2 w-2 rounded-full bg-accent"
     />
   )
@@ -230,8 +230,8 @@ function VariantItem({
       </button>
       <div className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 group-has-[[aria-expanded='true']]:opacity-100">
         <KebabMenu
-          ariaLabel={`Acciones sobre ${label}`}
-          items={[{ label: 'Archivar', onClick: () => onArchive(line.id) }]}
+          ariaLabel={`Actions on ${label}`}
+          items={[{ label: 'Archive', onClick: () => onArchive(line.id) }]}
         />
       </div>
     </div>
@@ -330,7 +330,7 @@ function ChapterSection({
         <span className="min-w-0 flex-1 truncate">{chapter.name}</span>
         {allLearned && (
           <span
-            aria-label="capítulo completado"
+            aria-label="chapter completed"
             className="rounded-full bg-ok-soft px-1.5 py-0.5 text-[10px] font-semibold text-ok"
           >
             100%
@@ -372,9 +372,9 @@ function ChapterSection({
 
 const STATUS_CHIPS: Array<{ value: StatusFilter; label: string }> = [
   { value: 'due', label: 'Due' },
-  { value: 'new', label: 'Nuevas' },
-  { value: 'learning', label: 'Aprendiendo' },
-  { value: 'mastered', label: 'Dominadas' },
+  { value: 'new', label: 'New' },
+  { value: 'learning', label: 'Learning' },
+  { value: 'mastered', label: 'Mastered' },
 ]
 
 export function CourseSidebar({
@@ -437,8 +437,8 @@ export function CourseSidebar({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar variante o capítulo…"
-            aria-label="Buscar en el curso"
+            placeholder="Search line or chapter…"
+            aria-label="Search the course"
             className="w-full rounded-md border border-line bg-surface-0 px-2.5 py-1.5 pr-7 text-sm text-ink placeholder:text-ink-faint focus:border-line-strong focus:outline-none"
           />
           {filtering && (
@@ -448,8 +448,8 @@ export function CourseSidebar({
                 setQuery('')
                 setStatuses(new Set())
               }}
-              aria-label="Limpiar filtro"
-              title="Limpiar filtro"
+              aria-label="Clear filter"
+              title="Clear filter"
               className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded px-1 text-xs text-ink-faint hover:text-ink"
             >
               ✕
@@ -477,12 +477,12 @@ export function CourseSidebar({
       <div className="space-y-1 p-2">
         {activeHiddenByFilter && (
           <p className="rounded bg-surface-2 px-2 py-1.5 text-xs text-ink-faint">
-            La variante activa está oculta por el filtro.
+            The active line is hidden by the filter.
           </p>
         )}
         {filtering && visibleChapters.length === 0 && (
           <p className="px-2 py-1.5 text-xs text-ink-faint">
-            Sin resultados para este filtro.
+            No results for this filter.
           </p>
         )}
         {visibleChapters.map((chapter) => (

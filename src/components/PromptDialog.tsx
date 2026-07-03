@@ -16,7 +16,7 @@ export function PromptDialog({
   initialValue,
   placeholder,
   confirmLabel,
-  cancelLabel = 'Cancelar',
+  cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
 }: PromptDialogProps) {

@@ -17,11 +17,11 @@ const MS_PER_DAY = 24 * MS_PER_HOUR
 /**
  * Human-readable time until the next review, in the unit that matches the
  * scale: minutes for FSRS learning steps, hours/days once the line graduates.
- * Rounding a 10-minute step up to "1 día" is exactly the lie this replaces.
+ * Rounding a 10-minute step up to "1 day" is exactly the lie this replaces.
  */
 export function formatDueIn(due: Date, now: Date): string {
   const diff = due.getTime() - now.getTime()
-  if (diff <= 0) return 'ahora'
+  if (diff <= 0) return 'now'
   if (diff < MS_PER_HOUR) {
     return `${Math.max(1, Math.round(diff / MS_PER_MINUTE))} min`
   }
@@ -29,7 +29,7 @@ export function formatDueIn(due: Date, now: Date): string {
     return `${Math.round(diff / MS_PER_HOUR)} h`
   }
   const days = Math.round(diff / MS_PER_DAY)
-  return days === 1 ? '1 día' : `${days} días`
+  return days === 1 ? '1 day' : `${days} days`
 }
 
 /** Solve time for a challenge exercise: "14s" under a minute, "1min 23s" above. */

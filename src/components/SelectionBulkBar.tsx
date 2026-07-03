@@ -38,7 +38,7 @@ export function SelectionBulkBar({
         <button
           type="button"
           onClick={onCancel}
-          aria-label="Cancelar selección"
+          aria-label="Cancel selection"
           className="rounded px-1.5 py-1 text-xs text-ink-muted hover:bg-surface-3"
         >
           ✕

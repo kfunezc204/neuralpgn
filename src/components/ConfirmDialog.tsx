@@ -16,7 +16,7 @@ export function ConfirmDialog({
   title,
   body,
   confirmLabel,
-  cancelLabel = 'Cancelar',
+  cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
   variant = 'default',

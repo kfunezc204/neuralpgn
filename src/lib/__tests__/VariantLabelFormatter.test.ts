@@ -11,10 +11,10 @@ describe('VariantLabelFormatter', () => {
     expect(label).toBe('Mate de Anastasia')
   })
 
-  it('returns "Variante N: <first 6 sans> …" with an ellipsis when the chapter has multiple lines and the line is longer than the preview window', () => {
+  it('returns "Line N: <first 6 sans> …" with an ellipsis when the chapter has multiple lines and the line is longer than the preview window', () => {
     const label = formatVariantLabel({
       line: {
-        dfs_index: 4, // displayed as Variante 5
+        dfs_index: 4, // displayed as Line 5
         steps: [
           { expected_san: 'e4' },
           { expected_san: 'e5' },
@@ -29,7 +29,7 @@ describe('VariantLabelFormatter', () => {
       chapter: { name: 'Scotch Game', lineCount: 29 },
     })
 
-    expect(label).toBe('Variante 5: e4 e5 Nf3 Nc6 d4 exd4 …')
+    expect(label).toBe('Line 5: e4 e5 Nf3 Nc6 d4 exd4 …')
   })
 
   it('omits the ellipsis when the line has the preview length or fewer SANs', () => {
@@ -46,7 +46,7 @@ describe('VariantLabelFormatter', () => {
       chapter: { name: 'Italian Game', lineCount: 4 },
     })
 
-    expect(label).toBe('Variante 1: e4 e5 Nf3 Nc6')
+    expect(label).toBe('Line 1: e4 e5 Nf3 Nc6')
   })
 
   it('preserves complex SAN notation (castling, captures, checks, mates) verbatim in the preview', () => {
@@ -62,6 +62,6 @@ describe('VariantLabelFormatter', () => {
       chapter: { name: 'Tricky Tactics', lineCount: 7 },
     })
 
-    expect(label).toBe('Variante 3: O-O-O Nxe5+ exd5#')
+    expect(label).toBe('Line 3: O-O-O Nxe5+ exd5#')
   })
 })

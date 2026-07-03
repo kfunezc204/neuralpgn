@@ -13,6 +13,6 @@ export function formatVariantLabel(input: VariantLabelInput): string {
   const hasMore = sans.length > PREVIEW_SAN_COUNT
   const ordinal = input.line.dfs_index + 1
   return hasMore
-    ? `Variante ${ordinal}: ${preview} …`
-    : `Variante ${ordinal}: ${preview}`
+    ? `Line ${ordinal}: ${preview} …`
+    : `Line ${ordinal}: ${preview}`
 }

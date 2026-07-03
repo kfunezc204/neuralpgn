@@ -83,10 +83,10 @@ function Summary({
   showSolveTime: boolean
 }) {
   if (mode === 'refresher') {
-    return <>✓ Variante completada — sin escribir en SRS</>
+    return <>✓ Line completed — nothing written to SRS</>
   }
   if (mode === 'teach') {
-    return <>✓ Línea aprendida — la verás en tu próximo repaso</>
+    return <>✓ Line learned — it will show up in your next review</>
   }
 
   // quiz
@@ -97,15 +97,15 @@ function Summary({
   const dueIn = stats.lineState ? formatDueIn(stats.lineState.due, now) : null
   return (
     <>
-      ✓ Variante completada —{' '}
+      ✓ Line completed —{' '}
       <span className={`font-semibold ${RATING_CLASS[stats.outcome]}`}>
         {RATING_LABEL[stats.outcome]}
       </span>{' '}
       · {accuracy}%
       {showSolveTime && stats.durationMs !== undefined && (
-        <> · resuelto en {formatSolveTime(stats.durationMs)}</>
+        <> · solved in {formatSolveTime(stats.durationMs)}</>
       )}
-      {dueIn !== null && <> · repaso en {dueIn}</>}
+      {dueIn !== null && <> · review in {dueIn}</>}
     </>
   )
 }
@@ -128,7 +128,7 @@ function Actions({
           onClick={onNavigateNext}
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-hover"
         >
-          Siguiente variante →
+          Next line →
         </button>
       )}
       {onExit && (
@@ -137,7 +137,7 @@ function Actions({
           onClick={onExit}
           className="rounded-md border border-line-strong px-3 py-2 text-sm text-ink-muted transition-colors duration-150 hover:bg-surface-2"
         >
-          Salir
+          Exit
         </button>
       )}
     </div>

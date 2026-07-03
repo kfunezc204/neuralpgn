@@ -128,7 +128,7 @@ export function CommentsPanel({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          aria-label="Expandir panel"
+          aria-label="Expand panel"
           aria-expanded={false}
           aria-controls="comments-panel-body"
           className="rounded p-1 text-ink-muted transition-colors duration-150 hover:bg-surface-3"
@@ -167,7 +167,7 @@ export function CommentsPanel({
           <button
             type="button"
             onClick={onToggleCollapsed}
-            aria-label="Colapsar panel"
+            aria-label="Collapse panel"
             aria-expanded={true}
             aria-controls="comments-panel-body"
             className="ml-2 rounded p-1 text-ink-muted transition-colors duration-150 hover:bg-surface-3"
@@ -180,7 +180,7 @@ export function CommentsPanel({
           {introComment && (
             <section className="mb-4">
               <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-                Sobre esta variante
+                About this line
               </h3>
               <CommentBlock text={introComment} />
             </section>
@@ -199,12 +199,10 @@ export function CommentsPanel({
 
           <section>
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-              Historial
+              History
             </h3>
             {history.length === 0 ? (
-              <p className="text-xs text-ink-faint">
-                Aún no hay jugadas registradas.
-              </p>
+              <p className="text-xs text-ink-faint">No moves recorded yet.</p>
             ) : (
               <HistoryFlow
                 tokens={formatHistoryAsPgnFlow({

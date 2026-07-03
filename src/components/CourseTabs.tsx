@@ -9,7 +9,7 @@ interface CourseTabsProps {
 export function CourseTabs({ activeTab, dueCount, onChange }: CourseTabsProps) {
   const reviewDisabled = dueCount === 0
   return (
-    <div role="tablist" aria-label="Modo del curso" className="flex gap-1">
+    <div role="tablist" aria-label="Course mode" className="flex gap-1">
       <button
         type="button"
         role="tab"
@@ -21,7 +21,7 @@ export function CourseTabs({ activeTab, dueCount, onChange }: CourseTabsProps) {
             : 'text-ink-muted hover:bg-surface-3'
         }`}
       >
-        Aprender
+        Learn
       </button>
       <button
         type="button"
@@ -41,7 +41,7 @@ export function CourseTabs({ activeTab, dueCount, onChange }: CourseTabsProps) {
               : 'text-ink-muted hover:bg-surface-3'
         }`}
       >
-        Repasar
+        Review
         <span
           className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-xs font-semibold tabular-nums ${
             reviewDisabled

@@ -605,7 +605,7 @@ export function WalkCore({
     if (!engine || !step || step.kind !== 'quiz') return
     const revealed = engine.hint()
     setHintComment(
-      revealed.comment ?? (revealed.shapes ? '' : 'Sin pista disponible.'),
+      revealed.comment ?? (revealed.shapes ? '' : 'No hint available.'),
     )
     setHintShapes(revealed.shapes ?? null)
   }
@@ -1014,7 +1014,7 @@ export function WalkCore({
         )}
         {step.kind === 'refutation-continuation' && (
           <p className="text-sm font-medium text-accent">
-            Refutación: {step.continuation.join(' ')}
+            Refutation: {step.continuation.join(' ')}
           </p>
         )}
         {step.kind === 'teach' && (
@@ -1034,10 +1034,10 @@ export function WalkCore({
             {feedback.kind === 'none' && (
               <>
                 <p className="text-sm text-ink-muted">
-                  Tu turno — juega la jugada
+                  Your turn — play the move
                   {retryCount > 0 && (
                     <span className="ml-2 text-xs text-accent">
-                      (segundo intento)
+                      (second try)
                     </span>
                   )}
                 </p>
@@ -1056,14 +1056,14 @@ export function WalkCore({
                         onClick={handleHint}
                         className="mt-2 text-xs text-accent underline decoration-accent/40 underline-offset-2 transition-colors duration-150 hover:text-accent-hover"
                       >
-                        Mostrar pista
+                        Show hint
                       </button>
                     )}
               </>
             )}
             {feedback.kind === 'retry' && (
               <p className="text-sm font-medium text-danger">
-                {feedback.played} no — intenta otra
+                {feedback.played} no — try another
               </p>
             )}
             {feedback.kind === 'correct' && (
@@ -1071,9 +1071,9 @@ export function WalkCore({
             )}
             {feedback.kind === 'reveal-fail' && (
               <p className="text-sm font-medium text-accent">
-                Incorrecto (jugaste {feedback.played})
+                Incorrect (you played {feedback.played})
                 {feedback.expected
-                  ? ` — la jugada era ${feedback.expected}`
+                  ? ` — the move was ${feedback.expected}`
                   : ''}
               </p>
             )}
@@ -1087,13 +1087,13 @@ export function WalkCore({
             onPrev={replayPrev}
             onNext={replayNext}
             onLast={replayLast}
-            label="Replay · Archivo"
+            label="Replay · Archive"
           />
         )}
       </div>
       {isRefresher && (
         <p className="text-xs italic text-ink-faint">
-          Repaso libre — sin escribir en SRS.
+          Free review — nothing written to SRS.
         </p>
       )}
     </div>

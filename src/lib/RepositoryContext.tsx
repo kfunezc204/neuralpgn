@@ -241,7 +241,7 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   )
 
   if (phase.kind === 'loading') {
-    return <div className="p-6 text-sm text-ink-muted">Cargando…</div>
+    return <div className="p-6 text-sm text-ink-muted">Loading…</div>
   }
   if (phase.kind === 'selecting') {
     return (
@@ -257,7 +257,7 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   if (phase.kind === 'booting') {
     return (
       <div className="p-6 text-sm text-ink-muted">
-        Abriendo perfil “{phase.profile.name}”…
+        Opening profile “{phase.profile.name}”…
       </div>
     )
   }
@@ -275,7 +275,7 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   if (phase.kind === 'error') {
     return (
       <div className="p-6">
-        <h1 className="text-xl font-semibold text-danger">Error al iniciar</h1>
+        <h1 className="text-xl font-semibold text-danger">Startup error</h1>
         <pre className="mt-2 whitespace-pre-wrap text-sm">{phase.error}</pre>
       </div>
     )

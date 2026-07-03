@@ -25,16 +25,16 @@ export function formatProfileSummary(
   summary: ProfileSummarySnapshot | undefined,
   now: Date,
 ): string {
-  if (!summary) return 'Perfil nuevo'
+  if (!summary) return 'New profile'
   const courses =
-    summary.course_count === 1 ? '1 curso' : `${summary.course_count} cursos`
+    summary.course_count === 1 ? '1 course' : `${summary.course_count} courses`
   const dues =
     summary.due_count === 0
-      ? 'al día'
+      ? 'up to date'
       : summary.due_count === 1
-        ? '1 repaso pendiente'
-        : `${summary.due_count} repasos pendientes`
-  return `${courses} · ${dues} · usado ${formatLastUsed(new Date(summary.last_used_at), now)}`
+        ? '1 review due'
+        : `${summary.due_count} reviews due`
+  return `${courses} · ${dues} · used ${formatLastUsed(new Date(summary.last_used_at), now)}`
 }
 
 function formatLastUsed(lastUsed: Date, now: Date): string {
@@ -46,7 +46,7 @@ function formatLastUsed(lastUsed: Date, now: Date): string {
   )
   const b = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const days = Math.round((b.getTime() - a.getTime()) / dayMs)
-  if (days <= 0) return 'hoy'
-  if (days === 1) return 'ayer'
-  return `hace ${days} días`
+  if (days <= 0) return 'today'
+  if (days === 1) return 'yesterday'
+  return `${days} days ago`
 }
