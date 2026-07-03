@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/kfunezc204/neuralpgn/releases/latest"><img src="https://img.shields.io/github/v/release/kfunezc204/neuralpgn?label=download" alt="Latest release" /></a>
-  <img src="https://img.shields.io/badge/platform-Windows-blue" alt="Platform" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-blue" alt="Platform" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT" /></a>
 </p>
 
@@ -84,6 +84,10 @@ React 19 + TypeScript + Tailwind CSS 4 on the frontend, [chessground](https://gi
 ## Contributing
 
 Issues and PRs are welcome. If you're reporting a training bug, attaching the offending PGN (or a link to the Lichess study) makes it much easier to reproduce.
+
+## Support
+
+NeuralPGN is free and open source, built in my spare time. If it's part of your training routine and you want to support development, you can [buy me a coffee on Ko-fi](https://ko-fi.com/kfunezc204) ☕ — entirely optional, the app will always be free.
 
 ## License
 

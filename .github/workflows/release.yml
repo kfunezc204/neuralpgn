@@ -1,15 +1,29 @@
 name: Release
 
 # Tag a version (git tag v0.2.0 && git push origin v0.2.0) to build the
-# Windows installers, sign the updater artifacts and publish a GitHub Release
-# with latest.json — the endpoint the in-app updater polls.
+# installers for Windows, macOS and Linux, sign the updater artifacts and
+# publish a GitHub Release with latest.json — the endpoint the in-app
+# updater polls. tauri-action merges each platform's entries into the same
+# release and latest.json.
 on:
   push:
     tags: ['v*']
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ''
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+          - platform: ubuntu-22.04
+            args: ''
+    runs-on: ${{ matrix.platform }}
     permissions:
       contents: write
     steps:
@@ -19,9 +33,18 @@ jobs:
           node-version: 24
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Both mac targets build from the same arm64 runner.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          key: ${{ matrix.platform }}-${{ matrix.args }}
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: npm ci
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -31,6 +54,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'NeuralPGN ${{ github.ref_name }}'
-          releaseBody: 'Windows installers. The app self-updates from earlier versions.'
+          releaseBody: 'Installers for Windows, macOS and Linux. The app self-updates from earlier versions.'
           releaseDraft: false
           prerelease: false
+          args: ${{ matrix.args }}
