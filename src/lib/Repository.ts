@@ -162,6 +162,59 @@ export interface MoveMissRow {
   expected_san: string | null
 }
 
+export interface NewImportedGame {
+  /** Stable identity (lichess:<id> or content hash); UNIQUE in the table, so re-imports dedupe. */
+  dedupe_key: string
+  source: 'lichess' | 'pgn'
+  site_url: string | null
+  /** ISO timestamp; null when the export carried no usable date. */
+  played_at: string | null
+  white: string
+  black: string
+  user_color: 'white' | 'black'
+  result: string
+  time_control: string | null
+  /** Mainline SANs; deviations are recomputed from these on every view open. */
+  sans: string[]
+  /** Full reconstructed PGN, kept for provenance and retroactive re-analysis. */
+  pgn_text: string
+}
+
+export interface ImportedGameRow extends NewImportedGame {
+  id: number
+  imported_at: string
+}
+
+interface ImportedGameRowRaw {
+  id: number
+  dedupe_key: string
+  source: 'lichess' | 'pgn'
+  site_url: string | null
+  played_at: string | null
+  white: string
+  black: string
+  user_color: 'white' | 'black'
+  result: string
+  time_control: string | null
+  sans: string
+  pgn_text: string
+  imported_at: string
+}
+
+export type DeviationActionKind = 'sent' | 'dismissed'
+
+export interface NewDeviationAction {
+  game_id: number
+  card_id: number
+  played_san: string
+  action: DeviationActionKind
+}
+
+export interface DeviationActionRow extends NewDeviationAction {
+  id: number
+  ts: string
+}
+
 export interface NewPuzzleAttempt {
   card_id: number
   ts: Date
@@ -366,11 +419,43 @@ export class Repository {
         line_id INTEGER NOT NULL REFERENCES lines(id) ON DELETE CASCADE,
         profile_id TEXT NOT NULL DEFAULT 'default',
         ts TEXT NOT NULL,
-        kind TEXT NOT NULL CHECK(kind IN ('retry','double_fail','refutation')),
+        kind TEXT NOT NULL CHECK(kind IN ('retry','double_fail','refutation','game_deviation')),
         played_san TEXT NOT NULL,
         expected_san TEXT
       )
     `)
+    // DBs created before Game Check carry the three-kind CHECK, and SQLite
+    // cannot ALTER a CHECK — rebuild the table once, keeping every row.
+    const missSchema = await this.sql.select<{ sql: string }>(
+      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'move_misses'`,
+    )
+    if (missSchema[0] && !missSchema[0].sql.includes('game_deviation')) {
+      await this.sql.executeAtomic([
+        {
+          sql: `ALTER TABLE move_misses RENAME TO move_misses_legacy`,
+          params: [],
+        },
+        {
+          sql: `CREATE TABLE move_misses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+            line_id INTEGER NOT NULL REFERENCES lines(id) ON DELETE CASCADE,
+            profile_id TEXT NOT NULL DEFAULT 'default',
+            ts TEXT NOT NULL,
+            kind TEXT NOT NULL CHECK(kind IN ('retry','double_fail','refutation','game_deviation')),
+            played_san TEXT NOT NULL,
+            expected_san TEXT
+          )`,
+          params: [],
+        },
+        {
+          sql: `INSERT INTO move_misses (id, card_id, line_id, profile_id, ts, kind, played_san, expected_san)
+                SELECT id, card_id, line_id, profile_id, ts, kind, played_san, expected_san FROM move_misses_legacy`,
+          params: [],
+        },
+        { sql: `DROP TABLE move_misses_legacy`, params: [] },
+      ])
+    }
     await this.sql.execute(
       `CREATE INDEX IF NOT EXISTS idx_move_misses_card ON move_misses(card_id, profile_id, ts)`,
     )
@@ -386,6 +471,46 @@ export class Repository {
     await this.sql.execute(
       `CREATE INDEX IF NOT EXISTS idx_puzzle_attempts_card ON puzzle_attempts(card_id, profile_id, ts)`,
     )
+
+    // Game Check: real games imported for repertoire-deviation analysis
+    // (additive, CREATE IF NOT EXISTS — same pattern as move_misses).
+    // Deviations themselves are never persisted; they are recomputed against
+    // the live repertoire, so this table is deliberately free of course FKs.
+    await this.sql.execute(`
+      CREATE TABLE IF NOT EXISTS imported_games (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dedupe_key TEXT NOT NULL UNIQUE,
+        source TEXT NOT NULL CHECK(source IN ('lichess','pgn')),
+        site_url TEXT,
+        played_at TEXT,
+        white TEXT NOT NULL,
+        black TEXT NOT NULL,
+        user_color TEXT NOT NULL CHECK(user_color IN ('white','black')),
+        result TEXT NOT NULL,
+        time_control TEXT,
+        sans TEXT NOT NULL,
+        pgn_text TEXT NOT NULL,
+        imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await this.sql.execute(
+      `CREATE INDEX IF NOT EXISTS idx_imported_games_played ON imported_games(played_at)`,
+    )
+    // User verdicts on computed deviations (sent to drill / dismissed). The
+    // UNIQUE key is the deviation's identity — recomputing deviations against
+    // a changed repertoire can never resurrect an acted-on one, and Drill
+    // stays idempotent.
+    await this.sql.execute(`
+      CREATE TABLE IF NOT EXISTS game_deviation_actions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL REFERENCES imported_games(id) ON DELETE CASCADE,
+        card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+        played_san TEXT NOT NULL,
+        action TEXT NOT NULL CHECK(action IN ('sent','dismissed')),
+        ts TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(game_id, card_id, played_san)
+      )
+    `)
 
     // Per-profile preferences (each profile owns its DB file). Deliberately
     // NOT in the version-nuke drop list: user prefs survive schema rebuilds.
@@ -1239,6 +1364,111 @@ export class Repository {
       [pgnId, profileId],
     )
     return rows.map((r) => ({ ...r, ts: new Date(r.ts) }))
+  }
+
+  private static readonly IMPORTED_GAME_COLUMNS = [
+    'dedupe_key',
+    'source',
+    'site_url',
+    'played_at',
+    'white',
+    'black',
+    'user_color',
+    'result',
+    'time_control',
+    'sans',
+    'pgn_text',
+  ]
+
+  /**
+   * Inserts games, silently skipping ones already imported (UNIQUE dedupe_key
+   * + OR IGNORE). Returns how many rows were actually new — the number the
+   * post-import summary reports.
+   */
+  async saveImportedGames(games: NewImportedGame[]): Promise<number> {
+    const columns = Repository.IMPORTED_GAME_COLUMNS
+    const rows = games.map((g) => [
+      g.dedupe_key,
+      g.source,
+      g.site_url,
+      g.played_at,
+      g.white,
+      g.black,
+      g.user_color,
+      g.result,
+      g.time_control,
+      JSON.stringify(g.sans),
+      g.pgn_text,
+    ])
+    let inserted = 0
+    for (const chunk of this.batchChunks(columns.length, rows)) {
+      const sql = this.insertSql(
+        'imported_games',
+        columns,
+        chunk.length,
+      ).replace('INSERT INTO', 'INSERT OR IGNORE INTO')
+      const { rowsAffected } = await this.sql.execute(sql, chunk.flat())
+      inserted += rowsAffected
+    }
+    return inserted
+  }
+
+  /** Cascade removes the game's deviation actions via FK; if the game is ever
+   * re-imported its deviations therefore come back as pending. */
+  async deleteImportedGame(gameId: number): Promise<void> {
+    await this.sql.execute(`DELETE FROM imported_games WHERE id = ?`, [gameId])
+  }
+
+  /** Bulk variant of deleteImportedGame, chunked to stay under SQLite's
+   * bind-parameter limit. Same cascade semantics. */
+  async deleteImportedGames(gameIds: number[]): Promise<void> {
+    for (const chunk of this.batchChunks(1, gameIds.map((id) => [id]))) {
+      const placeholders = chunk.map(() => '?').join(', ')
+      await this.sql.execute(
+        `DELETE FROM imported_games WHERE id IN (${placeholders})`,
+        chunk.flat(),
+      )
+    }
+  }
+
+  async listImportedGames(): Promise<ImportedGameRow[]> {
+    const rows = await this.sql.select<ImportedGameRowRaw>(
+      `SELECT id, dedupe_key, source, site_url, played_at, white, black,
+              user_color, result, time_control, sans, pgn_text, imported_at
+       FROM imported_games
+       ORDER BY played_at DESC, id DESC`,
+    )
+    return rows.map((r) => ({
+      ...r,
+      sans: JSON.parse(r.sans) as string[],
+    }))
+  }
+
+  /**
+   * Records a Drill/Dismiss verdict. Returns false when the deviation was
+   * already acted on (UNIQUE key) — the caller must then NOT record a second
+   * move miss, which is what keeps Drill idempotent.
+   */
+  async recordDeviationAction(action: NewDeviationAction): Promise<boolean> {
+    const { rowsAffected } = await this.sql.execute(
+      `INSERT OR IGNORE INTO game_deviation_actions (game_id, card_id, played_san, action, ts)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        action.game_id,
+        action.card_id,
+        action.played_san,
+        action.action,
+        new Date().toISOString(),
+      ],
+    )
+    return rowsAffected > 0
+  }
+
+  async listDeviationActions(): Promise<DeviationActionRow[]> {
+    return this.sql.select<DeviationActionRow>(
+      `SELECT id, game_id, card_id, played_san, action, ts
+       FROM game_deviation_actions ORDER BY id`,
+    )
   }
 
   async recordPuzzleAttempt(attempt: NewPuzzleAttempt): Promise<void> {

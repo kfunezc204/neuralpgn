@@ -82,6 +82,16 @@ export function CourseLayout() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
 
+  // Set when the user arrived via Game Check's "View line in course" link, so
+  // they get a way back to continue reviewing deviations. Kept in component
+  // state because internal navigations (line clicks, next-line) replace the
+  // history entry's state.
+  const [fromGameCheck] = useState(
+    () =>
+      (location.state as { fromGameCheck?: boolean } | null)?.fromGameCheck ===
+      true,
+  )
+
   const [pgn, setPgn] = useState<PgnSummary | null>(null)
   const [chapters, setChapters] = useState<CourseSidebarChapter[]>([])
   // While the sidebar loads, line states are unknown and resolveTabMode reads
@@ -861,7 +871,7 @@ export function CourseLayout() {
   }
 
   function handleExit() {
-    navigate('/')
+    navigate(fromGameCheck ? '/games' : '/')
   }
 
   const chapterForLine = useMemo(() => {
@@ -877,6 +887,20 @@ export function CourseLayout() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-surface-0">
       <div className="flex w-72 shrink-0 flex-col border-r border-line bg-surface-1">
+        {fromGameCheck && (
+          <div className="border-b border-line p-2">
+            <button
+              type="button"
+              onClick={() => navigate('/games')}
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-surface-3"
+            >
+              <span>←</span>
+              <span className="min-w-0 flex-1 truncate">
+                Back to Game Check
+              </span>
+            </button>
+          </div>
+        )}
         <div className="border-b border-line p-2">
           {inArchiveReplay ? (
             <button

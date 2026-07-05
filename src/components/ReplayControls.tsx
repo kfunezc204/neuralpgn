@@ -1,3 +1,10 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from 'lucide-react'
+
 interface ReplayControlsProps {
   stepIndex: number
   totalSteps: number
@@ -26,7 +33,7 @@ export function ReplayControls({
 
   function btnClass(disabled: boolean) {
     return [
-      'rounded-md border border-line-strong px-3 py-1 text-sm transition-colors duration-150',
+      'inline-flex items-center justify-center rounded-md border border-line-strong px-3 py-1.5 transition-colors duration-150',
       disabled
         ? 'cursor-not-allowed text-ink-faint'
         : 'text-ink-muted hover:bg-surface-3',
@@ -43,7 +50,7 @@ export function ReplayControls({
           aria-label="First step"
           className={btnClass(atStart)}
         >
-          ⏮
+          <ChevronsLeft className="h-4 w-4" />
         </button>
         <button
           type="button"
@@ -52,7 +59,7 @@ export function ReplayControls({
           aria-label="Previous step"
           className={btnClass(atStart)}
         >
-          ◀
+          <ChevronLeft className="h-4 w-4" />
         </button>
         {onNext && (
           <button
@@ -62,7 +69,7 @@ export function ReplayControls({
             aria-label="Next step"
             className={btnClass(atEnd)}
           >
-            ▶
+            <ChevronRight className="h-4 w-4" />
           </button>
         )}
         <button
@@ -72,11 +79,11 @@ export function ReplayControls({
           aria-label="Last step"
           className={btnClass(atEnd)}
         >
-          ⏭
+          <ChevronsRight className="h-4 w-4" />
         </button>
       </div>
       <p className="font-mono text-xs tabular-nums text-ink-muted">
-        Paso {displayed} / {totalSteps}
+        Step {displayed} / {totalSteps}
         {label ? ` · ${label}` : ''}
       </p>
     </div>

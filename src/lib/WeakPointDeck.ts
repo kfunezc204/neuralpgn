@@ -2,12 +2,18 @@
 // the set of positions that deserve reinforcement. Pure logic — Repository
 // supplies the rows, PuzzleSessionView renders the result.
 
-export type MoveMissKind = 'retry' | 'double_fail' | 'refutation'
+export type MoveMissKind =
+  | 'retry'
+  | 'double_fail'
+  | 'refutation'
+  | 'game_deviation'
 
 export const MISS_WEIGHT: Record<MoveMissKind, number> = {
   retry: 1,
   double_fail: 2,
   refutation: 2,
+  // Leaving book in a real game is a proven gap, not a maybe: straight into the deck.
+  game_deviation: 2,
 }
 
 // A position enters the deck once its accumulated score reaches the

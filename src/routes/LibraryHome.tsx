@@ -227,6 +227,9 @@ export function LibraryHome() {
               Review all · 0
             </span>
           )}
+          <Link to="/games" className={buttonClasses({ variant: 'secondary' })}>
+            Game Check
+          </Link>
           <Link
             to="/import"
             className={buttonClasses({ variant: 'secondary' })}

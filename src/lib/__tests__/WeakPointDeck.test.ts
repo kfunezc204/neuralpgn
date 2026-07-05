@@ -52,6 +52,12 @@ describe('buildWeakPoints — entry threshold', () => {
     ).toHaveLength(1)
   })
 
+  it('a real-game deviation enters immediately (weight 2)', () => {
+    const out = buildWeakPoints([miss(1, '2026-01-01', 'game_deviation')], [])
+    expect(out).toHaveLength(1)
+    expect(out[0].score).toBe(ENTRY_THRESHOLD)
+  })
+
   it('a failed puzzle attempt adds 1 to the score', () => {
     const out = buildWeakPoints(
       [miss(1, '2026-01-01', 'retry')],
