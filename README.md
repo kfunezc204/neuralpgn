@@ -36,6 +36,7 @@ Most opening trainers are web services: your repertoire lives on someone else's 
 - **Review All** — one session that walks every due line across your whole library.
 - **Challenge courses** — tactics-style packs where the first attempt _is_ the exercise: new lines quiz you blind instead of teaching first.
 - **Weak points** — moves you keep missing are collected into a dedicated drill deck.
+- **Game Check** — sync your latest Lichess games (or import a PGN of your own games) and see exactly where you left your repertoire; drill each deviation or dismiss it.
 - **Daily limits** — cap how many new lines enter rotation per day so the review queue stays sane.
 - **Profiles** — separate repertoires, stats, and schedules per player.
 - **Backups & recovery** — one-click backup and atomic restore of your entire database.
@@ -48,7 +49,7 @@ Grab the installer for the [latest release](https://github.com/kfunezc204/neural
 
 > **Windows SmartScreen note:** the binaries are not signed with a paid code-signing certificate, so Windows may show a "protected your PC" warning on first run. Click _More info → Run anyway_. Updates themselves are cryptographically signed and verified by the app before installing.
 
-The app talks to the network for exactly two things: `lichess.org` when you import a study, and GitHub Releases when checking for updates. Everything else is local.
+The app talks to the network for exactly two things: `lichess.org` when you import a study or sync your games for Game Check, and GitHub Releases when checking for updates. Everything else is local.
 
 ## How training works
 
@@ -56,6 +57,17 @@ The app talks to the network for exactly two things: `lichess.org` when you impo
 2. **Learn** — the app plays through a new line with you, showing comments and arrows from the source PGN.
 3. **Review** — when a line comes due, you play your side's moves from memory. Wrong move? You get a retry, then the correct move with its refutation continuation.
 4. **Repeat** — your result (perfect / with retries / failed) feeds FSRS, which schedules the next review: hard lines come back in hours, mastered lines in months.
+
+## Game Check: train against your real games
+
+Knowing your repertoire in the trainer is one thing — playing it under the clock is another. Game Check closes that loop:
+
+1. **Bring in your games.** Set your player name once, then click _Sync Lichess_ to download your latest games (standard chess only, all time controls), or import any PGN of your own games — Chess.com exports work too. Games are deduplicated, so re-syncing and re-importing are always safe.
+2. **See where you left book.** Each game is compared against your repertoire by position, so transpositions are handled correctly. Every move where you had a repertoire answer but played something else shows up as a _deviation_: what you played, what your repertoire expects, and which course the line comes from.
+3. **Act on each deviation.** Open it on the board — the expected move is drawn as an arrow, and you can replay the whole game with clickable notation (deviations marked in red). Then either **Drill** it (the position joins your weak-point deck, weighted like a repeated miss) or **Dismiss** it (it was blitz, it was deliberate — it never comes back).
+4. **Browse your archive.** Every imported game is kept in a searchable Games tab with its deviation count, so you can revisit any game later or clean up old imports.
+
+Deviations are never frozen: they're recomputed against your _current_ repertoire every time you open the view, so adding or removing a course updates your pending list automatically. Verdicts stick — a deviation you've drilled or dismissed stays resolved even if you re-import the same games.
 
 ## Development
 
