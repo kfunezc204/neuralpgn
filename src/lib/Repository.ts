@@ -16,6 +16,7 @@ import type {
 export interface PersistedLineStep {
   card_id: number
   expected_san: string
+  shapes_after?: BoardShape[]
 }
 
 export type ReviewRating = 'Again' | 'Hard' | 'Good' | 'Easy'
@@ -680,6 +681,7 @@ export class Repository {
       const dbSteps = line.steps.map((s) => ({
         card_id: cardIdMap.get(s.card_id),
         expected_san: s.expected_san,
+        ...(s.shapes_after ? { shapes_after: s.shapes_after } : {}),
       }))
       if (dbSteps.some((s) => s.card_id === undefined)) {
         throw new Error(`line ${line.id} references unknown card`)
@@ -1422,7 +1424,10 @@ export class Repository {
   /** Bulk variant of deleteImportedGame, chunked to stay under SQLite's
    * bind-parameter limit. Same cascade semantics. */
   async deleteImportedGames(gameIds: number[]): Promise<void> {
-    for (const chunk of this.batchChunks(1, gameIds.map((id) => [id]))) {
+    for (const chunk of this.batchChunks(
+      1,
+      gameIds.map((id) => [id]),
+    )) {
       const placeholders = chunk.map(() => '?').join(', ')
       await this.sql.execute(
         `DELETE FROM imported_games WHERE id IN (${placeholders})`,

@@ -785,6 +785,8 @@ describe('WalkEngine — isFullyAutoplayed (stm opponent tails)', () => {
   })
 })
 
+// Game-comment shapes describe the starting position — the card the first
+// teach/quiz step is built from.
 const SHAPES_PGN = `[Event "Puzzle 1"]
 [White "Tactics Pack"]
 [Black "?"]
@@ -792,7 +794,7 @@ const SHAPES_PGN = `[Event "Puzzle 1"]
 [FEN "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
 [SetUp "1"]
 
-1. Nf3 {[%cal Gg1f3][%csl Yd4] desarrolla} Nc6 2. Bc4 *
+{[%cal Gg1f3][%csl Yd4]} 1. Nf3 {desarrolla} Nc6 2. Bc4 *
 `
 
 function buildShapesIngest() {
@@ -852,7 +854,7 @@ describe('WalkEngine — hint reveals shapes', () => {
 [FEN "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
 [SetUp "1"]
 
-1. Nf3 {[%csl Yd4]} Nc6 2. Bc4 *
+{[%csl Yd4]} 1. Nf3 Nc6 2. Bc4 *
 `
     const { lines, cards } = new PgnIngestor().ingest(pgn)
     const engine = WalkEngine.quiz(lines[0], cards)

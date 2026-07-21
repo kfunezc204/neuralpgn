@@ -26,6 +26,7 @@ export function persistedToLine(l: PersistedLine): Line {
     steps: l.steps.map((s) => ({
       card_id: String(s.card_id),
       expected_san: s.expected_san,
+      ...(s.shapes_after ? { shapes_after: s.shapes_after } : {}),
     })),
     ...(l.intro_comment ? { intro_comment: l.intro_comment } : {}),
   }

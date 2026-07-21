@@ -410,38 +410,110 @@ describe('PgnIngestor — Lichess study chapter naming', () => {
 })
 
 describe('PgnIngestor — author shapes (%cal/%csl)', () => {
-  it('attaches arrows and highlighted squares from the user move comment to its card', () => {
+  // Lichess semantics: a %cal/%csl tag on a move describes the position AFTER
+  // that move — the board the author was looking at when drawing.
+
+  it('attaches shapes on an opponent move to the user card at the resulting position', () => {
     const pgn = `[Event "Test"]
 [White "Shapes Pack"]
 [Result "*"]
 
-1. e4 {[%cal Ge2e4,Rd8h4][%csl Yc6] controla el centro} e5 2. Nf3 *
+1. e4 e5 {[%cal Gg1f3,Rd1h5][%csl Yd4] idea del rival} 2. Nf3 *
 `
     const result = new PgnIngestor().ingest(pgn, {
       resolveStartingSide: () => 'white',
     })
 
     expect(result.warnings).toEqual([])
-    const cardE4 = result.cards.find((c) =>
+    const cardAfterE5 = result.cards.find((c) =>
       c.fen_canonical.startsWith(
-        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w',
+        'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w',
       ),
     )
-    expect(cardE4?.shapes).toEqual([
-      { brush: 'green', orig: 'e2', dest: 'e4' },
-      { brush: 'red', orig: 'd8', dest: 'h4' },
-      { brush: 'yellow', orig: 'c6' },
+    expect(cardAfterE5?.shapes).toEqual([
+      { brush: 'green', orig: 'g1', dest: 'f3' },
+      { brush: 'red', orig: 'd1', dest: 'h5' },
+      { brush: 'yellow', orig: 'd4' },
     ])
-    // Comment text stays clean alongside the extracted shapes.
-    expect(cardE4?.comment).toBe('controla el centro')
   })
 
-  it('drops annotations on opponent moves and emits no shapes field without annotations', () => {
+  it('attaches shapes on the user own move to the step as shapes_after, not to the card', () => {
     const pgn = `[Event "Test"]
 [White "Shapes Pack"]
 [Result "*"]
 
-1. e4 e5 {[%cal Gg8f6] idea del rival} 2. Nf3 *
+1. e4 {[%cal Ge4e5][%csl Yc6] controla el centro} e5 2. Nf3 *
+`
+    const result = new PgnIngestor().ingest(pgn, {
+      resolveStartingSide: () => 'white',
+    })
+
+    expect(result.warnings).toEqual([])
+    const cardStart = result.cards.find((c) =>
+      c.fen_canonical.startsWith(
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w',
+      ),
+    )
+    // The shapes describe the position after 1.e4, not the starting one.
+    expect(cardStart?.shapes).toBeUndefined()
+    // Comment text stays clean alongside the extracted shapes and keeps its
+    // hint role on the pre-move card.
+    expect(cardStart?.comment).toBe('controla el centro')
+
+    const line = result.lines[0]
+    expect(line.steps[0].shapes_after).toEqual([
+      { brush: 'green', orig: 'e4', dest: 'e5' },
+      { brush: 'yellow', orig: 'c6' },
+    ])
+    expect(line.steps[1].shapes_after).toBeUndefined()
+  })
+
+  it('keeps shapes_after on the last step of a line', () => {
+    const pgn = `[Event "Test"]
+[White "Shapes Pack"]
+[Result "*"]
+
+1. e4 e5 2. Nf3 {[%cal Gf3e5]} *
+`
+    const result = new PgnIngestor().ingest(pgn, {
+      resolveStartingSide: () => 'white',
+    })
+
+    const line = result.lines[0]
+    const last = line.steps[line.steps.length - 1]
+    expect(last.expected_san).toBe('Nf3')
+    expect(last.shapes_after).toEqual([
+      { brush: 'green', orig: 'f3', dest: 'e5' },
+    ])
+  })
+
+  it('attaches game-comment shapes to the starting-position card', () => {
+    const pgn = `[Event "Test"]
+[White "Shapes Pack"]
+[Result "*"]
+
+{[%cal Ge2e4]} 1. e4 e5 2. Nf3 *
+`
+    const result = new PgnIngestor().ingest(pgn, {
+      resolveStartingSide: () => 'white',
+    })
+
+    const cardStart = result.cards.find((c) =>
+      c.fen_canonical.startsWith(
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w',
+      ),
+    )
+    expect(cardStart?.shapes).toEqual([
+      { brush: 'green', orig: 'e2', dest: 'e4' },
+    ])
+  })
+
+  it('emits no shapes field without annotations', () => {
+    const pgn = `[Event "Test"]
+[White "Shapes Pack"]
+[Result "*"]
+
+1. e4 e5 2. Nf3 *
 `
     const result = new PgnIngestor().ingest(pgn, {
       resolveStartingSide: () => 'white',
@@ -450,6 +522,11 @@ describe('PgnIngestor — author shapes (%cal/%csl)', () => {
     for (const card of result.cards) {
       expect(card.shapes).toBeUndefined()
     }
+    for (const line of result.lines) {
+      for (const step of line.steps) {
+        expect(step.shapes_after).toBeUndefined()
+      }
+    }
   })
 
   it('falls back to green for unknown color letters', () => {
@@ -457,24 +534,7 @@ describe('PgnIngestor — author shapes (%cal/%csl)', () => {
 [White "Shapes Pack"]
 [Result "*"]
 
-1. e4 {[%csl Zc6]} e5 *
-`
-    const result = new PgnIngestor().ingest(pgn, {
-      resolveStartingSide: () => 'white',
-    })
-
-    expect(result.cards[0]?.shapes).toEqual([{ brush: 'green', orig: 'c6' }])
-  })
-
-  it('keeps the first shapes when FEN-deduped positions repeat across lines', () => {
-    // Both branches pass through the same position after 1.e4 e5: the
-    // mainline annotates 2.Nf3 with arrows; the variation annotates the same
-    // position differently. First appearance wins, like card comments.
-    const pgn = `[Event "Test"]
-[White "Shapes Pack"]
-[Result "*"]
-
-1. e4 e5 2. Nf3 {[%cal Gg1f3]} Nc6 (2... d6 3. d4 {[%cal Gd2d4]}) 3. Bb5 *
+1. e4 e5 {[%csl Zc6]} 2. Nf3 *
 `
     const result = new PgnIngestor().ingest(pgn, {
       resolveStartingSide: () => 'white',
@@ -485,8 +545,34 @@ describe('PgnIngestor — author shapes (%cal/%csl)', () => {
         'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w',
       ),
     )
-    expect(cardAfterE5?.shapes).toEqual([
-      { brush: 'green', orig: 'g1', dest: 'f3' },
-    ])
+    expect(cardAfterE5?.shapes).toEqual([{ brush: 'green', orig: 'c6' }])
+  })
+
+  it('keeps the first shapes when FEN-deduped positions repeat across games', () => {
+    // Both games reach the same position after 1.e4 e5 with different
+    // annotations on the move that led there. First appearance wins, like
+    // card comments.
+    const pgn = `[Event "Test"]
+[White "Shapes Pack"]
+[Result "*"]
+
+1. e4 e5 {[%csl Ga1]} 2. Nf3 *
+
+[Event "Test"]
+[White "Shapes Pack"]
+[Result "*"]
+
+1. e4 e5 {[%csl Rb2]} 2. Nf3 *
+`
+    const result = new PgnIngestor().ingest(pgn, {
+      resolveStartingSide: () => 'white',
+    })
+
+    const cardAfterE5 = result.cards.find((c) =>
+      c.fen_canonical.startsWith(
+        'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w',
+      ),
+    )
+    expect(cardAfterE5?.shapes).toEqual([{ brush: 'green', orig: 'a1' }])
   })
 })

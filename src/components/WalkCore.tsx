@@ -148,7 +148,12 @@ export function WalkCore({
   // the user's move + the move), replay-style. reviewIdx null = resting on
   // the real final position (the normal completion view).
   const [reviewSteps, setReviewSteps] = useState<
-    { fen: string; san: string; shapes?: BoardShape[] }[]
+    {
+      fen: string
+      san: string
+      shapes?: BoardShape[]
+      shapesAfter?: BoardShape[]
+    }[]
   >([])
   const [reviewIdx, setReviewIdx] = useState<number | null>(null)
   const historyRef = useRef<WalkHistoryEntry[]>(emptyHistory())
@@ -228,6 +233,7 @@ export function WalkCore({
                   fen: card.fen_canonical,
                   san: s.expected_san,
                   ...(card.shapes ? { shapes: card.shapes } : {}),
+                  ...(s.shapes_after ? { shapesAfter: s.shapes_after } : {}),
                 },
               ]
             : []
@@ -421,11 +427,12 @@ export function WalkCore({
     }[] = []
     let landing: { from: string; to: string } | null = null
     let endFen: string | null = null
+    let finalShapes: BoardShape[] | null = null
     for (let i = 0; i < reviewSteps.length; i++) {
       const s = reviewSteps[i]
       const userMove = sanToFromTo(s.fen, s.san)
-      // Author shapes belong to the user-to-move frame: the position the
-      // annotation was written for in the study.
+      // Card shapes belong to the user-to-move frame: the author drew them on
+      // the position where this move has to be found.
       frames.push({
         fen: s.fen,
         highlight: userMove,
@@ -439,24 +446,29 @@ export function WalkCore({
         i + 1 < reviewSteps.length ? reviewSteps[i + 1].fen : finalFen
       if (nextFen && canon(afterUser) !== canon(nextFen)) {
         // Opponent reply lives between the steps: give the post-user-move
-        // position its own frame so the reply is a separate ▶ press.
+        // position its own frame so the reply is a separate ▶ press. Shapes
+        // the author drew on the user's own move belong to this frame.
         frames.push({
           fen: afterUser,
           highlight: null,
           lastMove: userMove,
-          shapes: null,
+          shapes: s.shapesAfter ?? null,
         })
         landing = findConnectingMove(afterUser, nextFen)
         endFen = nextFen
       } else {
         landing = userMove
+        // No intermediate frame: the post-move position IS the next frame
+        // (stm lines) or the final one. Only the final frame needs the
+        // shapes — mid-line they already live on the next step's card.
+        if (i === reviewSteps.length - 1) finalShapes = s.shapesAfter ?? null
       }
     }
     frames.push({
       fen: finalFen ?? endFen ?? '',
       highlight: null,
       lastMove: landing,
-      shapes: null,
+      shapes: finalShapes,
     })
     return frames[frames.length - 1].fen ? frames : []
   }, [reviewSteps, finalFen])
@@ -898,16 +910,18 @@ export function WalkCore({
             : undefined
 
   // Author %cal/%csl annotations: only where the expected move is already
-  // visible (teach steps, replay, post-completion review frames) or
-  // deliberately revealed (hint on the current quiz step) — never on an
-  // unanswered quiz question.
+  // visible (teach steps, replay, post-completion review frames, the final
+  // position once the line is solved) or deliberately revealed (hint on the
+  // current quiz step) — never on an unanswered quiz question.
   const authorShapes = reviewFrame
     ? (reviewFrame.shapes ?? undefined)
     : step.kind === 'teach' || step.kind === 'replay'
       ? step.shapes
       : step.kind === 'quiz' && hintShapes
         ? hintShapes
-        : undefined
+        : step.kind === 'done'
+          ? (reviewFrames[reviewFrames.length - 1]?.shapes ?? undefined)
+          : undefined
 
   const lastMoveForBoard = reviewFrame
     ? (reviewFrame.lastMove ?? undefined)

@@ -182,6 +182,9 @@ interface PendingVariation {
   moves: MinimalMove[]
   fen: string
   prefix: LineStep[]
+  // Shapes describing the branch position (from the move that led to it), so
+  // the variation's first user card gets them even if the mainline didn't.
+  startShapes: BoardShape[]
 }
 
 function runPendingVariations(
@@ -192,7 +195,16 @@ function runPendingVariations(
   introComment?: string,
 ): void {
   for (const v of pending) {
-    walkLine(v.moves, v.fen, v.prefix, acc, counters, warnings, introComment)
+    walkLine(
+      v.moves,
+      v.fen,
+      v.prefix,
+      acc,
+      counters,
+      warnings,
+      introComment,
+      v.startShapes,
+    )
   }
 }
 
@@ -206,10 +218,17 @@ function walkLine(
   // Game-level comment (before move 1); every line emitted from this game's
   // tree carries it so the exercise/lesson context survives per line (US35).
   introComment?: string,
+  // Shapes describing startFen (from the game comment, or from the move that
+  // led to a variation's branch point).
+  startShapes: BoardShape[] = [],
 ): void {
   const chess = new Chess(startFen)
   const steps: LineStep[] = [...prefixSteps]
   const pending: PendingVariation[] = []
+  // Lichess semantics: a %cal/%csl tag on a move describes the position AFTER
+  // that move. pendingShapes always holds the shapes for the CURRENT position,
+  // harvested from the previous move (or from startShapes at the top).
+  let pendingShapes: BoardShape[] = startShapes
 
   for (const rawMove of moves) {
     let move: MinimalMove = rawMove
@@ -251,7 +270,12 @@ function walkLine(
         card.refutations.push(refutation)
         continue
       }
-      pending.push({ moves: variation, fen: preFen, prefix: [...steps] })
+      pending.push({
+        moves: variation,
+        fen: preFen,
+        prefix: [...steps],
+        startShapes: pendingShapes,
+      })
     }
 
     // Validate the move BEFORE materializing its step: a truncated line must
@@ -269,16 +293,26 @@ function walkLine(
       return
     }
 
+    // This move's own shapes describe the position AFTER it (Lichess draws
+    // them on the board the author was looking at, i.e. post-move).
+    const moveShapes = shapesFromDiag(move.commentDiag)
+
     if (isUserTurn(turn, acc.userSide)) {
       const card = getOrCreateCard(acc, counters, preFen)
       const moveComment = move.commentAfter ?? move.commentMove
       if (moveComment && !card.comment) card.comment = moveComment
-      // Author shapes follow the comment rules: user moves only, first
-      // appearance wins on FEN-deduped cards.
-      const shapes = shapesFromDiag(move.commentDiag)
-      if (shapes.length > 0 && !card.shapes) card.shapes = shapes
-      steps.push({ card_id: card.id, expected_san: san })
+      // Shapes for THIS position came from the previous move (usually the
+      // opponent's). First appearance wins on FEN-deduped cards.
+      if (pendingShapes.length > 0 && !card.shapes) card.shapes = pendingShapes
+      steps.push({
+        card_id: card.id,
+        expected_san: san,
+        // Shapes on the user's own move belong to the post-move frame.
+        ...(moveShapes.length > 0 ? { shapes_after: moveShapes } : {}),
+      })
     }
+
+    pendingShapes = moveShapes
   }
 
   emitLine(acc, counters, steps, introComment)
@@ -354,6 +388,10 @@ export class PgnIngestor {
         const startFen = tags?.FEN ?? INITIAL_FEN
         const intro = game.gameComment?.comment ?? undefined
         if (intro && !acc.intro_comment) acc.intro_comment = intro
+        // %cal/%csl in the game comment describe the starting position.
+        const startShapes = shapesFromDiag(
+          game.gameComment as MinimalMove['commentDiag'],
+        )
         walkLine(
           game.moves as MinimalMove[],
           startFen,
@@ -362,6 +400,7 @@ export class PgnIngestor {
           counters,
           warnings,
           intro,
+          startShapes,
         )
       }
 

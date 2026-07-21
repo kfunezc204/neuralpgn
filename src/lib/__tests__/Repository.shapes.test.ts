@@ -3,6 +3,8 @@ import { openInMemoryAdapter } from './inMemoryAdapter.ts'
 import { PgnIngestor } from '../PgnIngestor.ts'
 import { Repository } from '../Repository.ts'
 
+// Game-comment shapes land on the starting-position card; the %cal on the
+// user's own 2.Bc4 lands on that step's shapes_after.
 const SHAPES_PGN = `[Event "Test"]
 [White "Shapes Pack"]
 [Black "?"]
@@ -10,7 +12,7 @@ const SHAPES_PGN = `[Event "Test"]
 [FEN "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
 [SetUp "1"]
 
-1. Nf3 {[%cal Gg1f3][%csl Yd4] desarrolla} Nc6 2. Bc4 *
+{[%cal Gg1f3][%csl Yd4]} 1. Nf3 {desarrolla} Nc6 2. Bc4 {[%cal Gc4f7]} *
 `
 
 async function freshRepo() {
@@ -40,6 +42,18 @@ describe('Repository — card shapes', () => {
     ])
     // Cards without annotations stay shape-less.
     expect(cards.some((c) => c.shapes === null)).toBe(true)
+  })
+
+  it('persists step shapes_after and returns them on load', async () => {
+    const repo = await freshRepo()
+    const chapterId = await seedShapesPgn(repo)
+
+    const [line] = await repo.getLinesForChapter(chapterId)
+
+    expect(line.steps[0].shapes_after).toBeUndefined()
+    expect(line.steps[1].shapes_after).toEqual([
+      { brush: 'green', orig: 'c4', dest: 'f7' },
+    ])
   })
 
   it('migration adds the shapes column to a pre-existing DB and is a no-op when re-run', async () => {

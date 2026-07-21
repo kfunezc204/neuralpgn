@@ -62,12 +62,24 @@ export interface Card {
   fen_canonical: string
   refutations: Refutation[]
   comment?: string
+  /**
+   * Author-drawn shapes for THIS position. In Lichess PGN a %cal/%csl tag on a
+   * move describes the position after that move, so these come from the move
+   * (usually the opponent's) that led here, or from the game comment for the
+   * starting position.
+   */
   shapes?: BoardShape[]
 }
 
 export interface LineStep {
   card_id: string
   expected_san: string
+  /**
+   * Author-drawn shapes for the position AFTER expected_san is played (from
+   * the %cal/%csl tag on the user's own move). Rendered on the post-move
+   * review frame — and on the final position when this is the last step.
+   */
+  shapes_after?: BoardShape[]
 }
 
 export interface Line {
